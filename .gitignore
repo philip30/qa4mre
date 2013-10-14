@@ -1,4 +1,4 @@
-# Compiled source #
+l# Compiled source #
 ###################
 *.com
 *.class
@@ -40,3 +40,4 @@ Thumbs.db
 #################
 cache
 input/*
+*.pyc
