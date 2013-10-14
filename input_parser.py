@@ -2,8 +2,8 @@
 # Oct 14 2013
 
 import xml.etree.ElementTree as etree
-from input_downloader import directory as directory
-from input_downloader import input as inp
+from util import directory as directory
+from util import input as inp
 from util import build_name_txt as build_name
 
 def parse(filename):
@@ -30,7 +30,6 @@ def parse(filename):
 			_questions.append({"q_str" : q_str, "answer" : choices})
 		tests.append({'doc':doc, 'q': _questions})
 	return tests
-
 
 
 if __name__ == "__main__":
