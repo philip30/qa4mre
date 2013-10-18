@@ -4,7 +4,7 @@ from configuration import STANFORD_NER_JVM_MEMORY as memory
 from util import count_leaves as count_line
 from util import traverse_test_set as traverse
 from util import traverse_test_set_with_assignment as traverse_assignment
-from util import traverse_test_set_root as traverse_root
+from util import traverse_test_set_root as traverse_root 
 
 import os
 import subprocess
@@ -61,7 +61,6 @@ class StanfordNER():
 	def read_tagged(self,f,document_list):
 		for document in document_list:
 			traverse_root(lambda x: self.read_ner(f),document,assignment=True)
-		print document_list
 
 	def run_stanford_tagger(self):
 		os.system(command)
@@ -70,7 +69,7 @@ class StanfordNER():
 		return qacache.open_cache(merged_name,'w')
 
 	def write_test_set(self,f,test_set):
-		traverse_assignment(lambda x: not any(c in x.strip()[-3:] for c in ['.','!','?']) and x + '.' or x,test_set)
+		traverse_assignment(lambda x: not any(c in x.strip() for c in ['.','!','?']) and x + '.' or x,test_set)
 		traverse(lambda x: util.write_line(f,str(x)),test_set)
 
 
