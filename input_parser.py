@@ -16,6 +16,7 @@ def sentence_splitter(d):
 	d = re.sub("^.","", d)
 	d = re.sub("--", " ",d)
 	d = re.sub(" {2,}"," ",d)
+	d = re.sub("/", " ",d)
 	return tokenizer.tokenize(d)
 
 def parse(filename):

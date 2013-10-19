@@ -11,7 +11,6 @@ input = {
 	'CLEF_2013_GS': 'http://celct.fbk.eu/QA4MRE/scripts/downloadFile.php?file=/websites/ResPubliQA/resources/past_campaigns/2013/Main_Task/Training_Data/Goldstandard/QA4MRE-2013-EN_GS.xml'
 }
 
-
 #function
 def build_name_txt(directory, url):
 	return directory + "/" + url + ".txt"
@@ -47,29 +46,40 @@ def print_leaves(node,f=None):
 def write_line(f,string):
 	f.write(str(string)+'\n')
 
-def traverse_test_set(action,test):
+def traverse_test_set(action,test,list_method=False):
 	for sentence in test['doc']:
-		action(sentence)
+		apply_action(action,sentence,list_method)
 	for question in test['q']:
-		action(question['q_str'])
+		apply_action(action,question['q_str'],list_method)
 		for choice in question['answer']:
-			action(choice['value'])
+			apply_action(action,choice['value'],list_method)
 
-def traverse_test_set_with_assignment(action,test):
+def apply_action(action, item, list_method):
+	if not list_method and isinstance(item,list):
+		for i in range(0,len(item)):
+			item[i] = action(item[i])
+		return item
+	else:
+		return action(item)
+
+def traverse_test_set_with_assignment(action,test,list_method = False):
 	for i in range (0,len(test['doc'])):
-		test['doc'][i] = action(test['doc'][i])
+		test['doc'][i] = apply_action(action,test['doc'][i],list_method)
 	for question in test['q']:
-		question['q_str'] = action(question['q_str'])
+		question['q_str'] = apply_action(action,question['q_str'],list_method)
 		for choice in question['answer']:
-			choice['value'] = action(choice['value'])
+			choice['value'] = apply_action(action,choice['value'],list_method)
 
-def traverse_test_set_root(action,test_set,assignment=False):
+def traverse_test_set_root(action,test_set,assignment=False,list_method = False):
 	for test in test_set:
 		if not assignment:
-			traverse_test_set(action,test)
+			traverse_test_set(action,test,list_method)
 		else:
-			traverse_test_set_with_assignment(action,test)
+			traverse_test_set_with_assignment(action,test,list_method)
 
+def traverse_all_test_sets(action,test_sets,assignment=False,list_method = False):
+	for test_set in test_sets:
+		traverse_test_set_root(action,test_set,assignment,list_method)
 
 # Unit test
 class TestCase(unittest.TestCase):
