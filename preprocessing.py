@@ -1,4 +1,7 @@
 #!/bin/python
+# Philip Arthur
+# Oct 19 2013
+
 import nltk
 import util
 import re
@@ -8,7 +11,10 @@ from stanford_ner import StanfordNER
 from input_parser import parse
 from util import traverse_all_test_sets as traverse_all
 from stop_word_list import stop_word_list as stop_word_list
+from nltk.stem.porter import PorterStemmer
 
+stemmer = PorterStemmer()
+used_stop_word_list = stop_word_list - set([]) #exclusion list
 def preprocess(testdoc,tag_ner=True):
 	if tag_ner:
 		StanfordNER(testdoc)
@@ -22,16 +28,100 @@ def preprocess(testdoc,tag_ner=True):
 	# only alpha numeric is allowed
 	traverse_all(lambda x : (filter(lambda c: c.isalpha(), x[0]),x[1]), testdoc,assignment=True)
 
+	# co-Reference Resolution
+	write_result(testdoc, '3-alphanum-lowercasing.txt')
+	coreference_resolution(testdoc)
+	write_result(testdoc, '4-correference-resolution.txt')
+
 	# stop word deletion
-	traverse_all(lambda x: x[0] in stop_word_list and ("",x[1]) or x,testdoc, assignment=True)
+	traverse_all(lambda x: x[0] in used_stop_word_list and ("",x[1]) or x,testdoc, assignment=True)
+
+	# stemming
+	traverse_all(lambda x : (stemmer.stem(x[0]),x[1]),testdoc, assignment=True)
 
 	# purging
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
 
-	write_result(testdoc, '3-stop-word-and-cleaning')
-	# co-Reference Resolution
+	write_result(testdoc, '5-stop-word-cleaning-stemming.txt')
 
-	# stemming
+######### CO-REFERENCE RESOLUTION ################
+pronoun = set(['i','my','mine','she','he','it', 'his', 'her', 'they', 'them', 'their', 'him', 'himself', 'herself', 'myself', 'themselves', 'itself'])
+tag_set = set(['PERSON', 'LOCATION', 'ORGANIZATION', 'MISC'])
+look_up_threshold = 5
+expected_map = {
+	'i' : ['SPEAKER'],
+	'my' : ['SPEAKER'],
+	'mine' : ['SPEAKER'],
+	'me' : ['SPEAKER'],
+	'myself' : ['SPEAKER'],
+	'she' : ['PERSON'],
+	'he': ['PERSON'],
+	'his': ['PERSON'],
+	'him': ['PERSON'],
+	'her': ['PERSON'],
+	'himself': ['PERSON'],
+	'herself': ['PERSON'],
+	'it': set(['LOCATION', 'ORGANIZATION', 'MISC']),
+	'itself': set(['LOCATION', 'ORGANIZATION', 'MISC']),
+	'they': ['ORGANIZATION'],
+	'them' : ['ORGANIZATION'],
+	'their' : ['ORGANIZATION'],
+	'themselves': ['ORGANIZATION']
+	# TODO our and us!
+}
+def coreference_resolution(test_docs):
+	for test_doc in test_docs:
+		for test_set in test_doc:
+			doc = test_set['doc']
+			_coreference_resolution(doc)
+
+def _coreference_resolution(test_doc):
+	latest_ne = []	
+	unreferenced_pronoun = {'SPEAKER': [], 'PERSON' : [], 'LOCATION': [], 'ORGANIZATION': [], 'MISC': [] }
+	speaker = None
+	for i in range(0,len(test_doc)): # test_doc[i] ==> sentence
+		for j in range(0,len(test_doc[i])): # test_doc[i][j] ==> (WORD, NE_TAG)
+			word, tag = test_doc[i][j]
+			if word in pronoun:
+				expected_ne = expected_map[word]
+				if 'SPEAKER' in expected_ne:
+					if speaker != None:
+						test_doc[i][j] = (speaker, 'PERSON')
+					else:
+						map (lambda x: unreferenced_pronoun[x].append((i,j)), expected_ne)
+				else:
+					ne_result = look_up_ne(expected_ne,latest_ne,look_up_threshold)
+					if ne_result != None:
+						test_doc[i][j] = ne_result
+					else:
+						map (lambda x: unreferenced_pronoun[x].append((i,j)), expected_ne)
+			elif tag in tag_set:
+				is_speaker = speaker == None and tag == 'PERSON'
+				if is_speaker:
+					speaker = word
+				latest_ne = [(word,tag)] + latest_ne
+				if not unreferenced_pronoun[tag]: # there is some unreferenced NE
+					reference_ne(latest_ne[0],unreferenced_pronoun[is_speaker and 'SPEAKER' or tag],test_doc)
+
+	# for the remaining unreferenced, look up the entire latest_ne list
+	for tag, unreferenced_list in unreferenced_pronoun.items():
+		for i,j in unreferenced_list:
+			ne = look_up_ne(tag,latest_ne,len(latest_ne))
+			if ne != None:
+				test_doc[i][j] = ne
+
+def look_up_ne(expected, latest, look_up_threshold):
+	for i in range (0, look_up_threshold):
+		if i == len(latest):
+			break
+		elif latest[i][1] in expected: # latest[i] ==> (WORD,NE_TAG)
+			return latest[i]
+	return None
+
+def reference_ne(ne,coordinate_list,target_doc):
+	for i,j in coordinate_list:
+		if target_doc[i][j][1] == 'O':
+			target_doc[i][j] = ne
 
 
 ######### IO #####################################
@@ -42,11 +132,14 @@ def write_result(testdoc, name):
 
 ######### TOKEN ALTERING #########################
 token_map = {
+	"'m" : "am",
 	"n't" : "not",
 	"'s" : "is",
 	"'re" : "are",
 	"'d" : "would",
-	"'ve" : "have"
+	"'ve" : "have",
+	"--lrb--":"(",
+	"--rrb--":")"
 }
 
 def token_altering(token):

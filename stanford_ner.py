@@ -1,3 +1,8 @@
+#!/usr/bin/python
+
+# Philip Arthur
+# Oct 19 2013
+
 from configuration import STANFORD_NER_TAGSET_PATH as tagset_path
 from configuration import STANFORD_NER_JAR_PATH as jar_path
 from configuration import STANFORD_NER_JVM_MEMORY as memory

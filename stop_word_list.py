@@ -1,4 +1,4 @@
-stop_word_list = [ "a",
+stop_word_list = set([ "a",
 	"a's",
 	"able",
 	"about",
@@ -569,4 +569,4 @@ stop_word_list = [ "a",
 	"yourselves",
 	"z",
 	"zero"
-]
+])
