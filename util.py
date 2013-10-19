@@ -1,31 +1,22 @@
-# Philip Arthur
-# Oct 14 2013
-#from __future__ import print_function
+#!/usr/bin/python
+
+# (C) Copyright 2013 Philip Arthur, NAIST
+# 
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser General Public License
+# (LGPL) version 2.1 which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-2.1.html
+# 
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+
 import unittest
+from configuration import directory as directory
 
-# Data
-directory = "input"
-input = {
-	'CLEF_2011_GS':'http://celct.fbk.eu/QA4MRE/scripts/downloadFile.php?file=/websites/ResPubliQA/resources/past_campaigns/2011/Training_Data/Goldstandard/QA4MRE-2011-EN_GS.xml',
-	'CLEF_2012_GS': 'http://celct.fbk.eu/QA4MRE/scripts/downloadFile.php?file=/websites/ResPubliQA/resources/past_campaigns/2012/Main_Task/Training_Data/Goldstandard/Parallel_Aligned/QA4MRE-2012-EN_GS_SYNC.xml',
-	'CLEF_2013_GS': 'http://celct.fbk.eu/QA4MRE/scripts/downloadFile.php?file=/websites/ResPubliQA/resources/past_campaigns/2013/Main_Task/Training_Data/Goldstandard/QA4MRE-2013-EN_GS.xml'
-}
-
-#function
 def build_name_txt(directory, url):
 	return directory + "/" + url + ".txt"
-
-def count_leaves(node):
-	i = 0;
-	if isinstance(node,list) or isinstance(node,tuple):
-		for item in node:
-			i += count_leaves(item)
-	elif isinstance(node,dict):
-		for item in node.itervalues():
-			i += count_leaves(item)
-	elif isinstance(node,str):
-		i = 1
-	return i;
 
 def print_leaves(node,f=None):
 	if isinstance(node,list) or isinstance(node,tuple):
@@ -83,9 +74,6 @@ def traverse_all_test_sets(action,test_sets,assignment=False,list_method = False
 
 # Unit test
 class TestCase(unittest.TestCase):
-	def test_count_leaves(self):
-		self.assertEquals((count_leaves({1:[1,2,3,4,[3,4,5,6]],2:[3,4,5]})),11)
-
 	def test_build_name_txt(self):
 		self.assertEquals(build_name_txt('dir','file'),'dir/file.txt')
 

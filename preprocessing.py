@@ -1,6 +1,16 @@
-#!/bin/python
-# Philip Arthur
-# Oct 19 2013
+#!/usr/bin/python
+
+# (C) Copyright 2013 Philip Arthur, NAIST
+# 
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the GNU Lesser General Public License
+# (LGPL) version 2.1 which accompanies this distribution, and is available at
+# http://www.gnu.org/licenses/lgpl-2.1.html
+# 
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
 
 import nltk
 import util
@@ -123,7 +133,6 @@ def reference_ne(ne,coordinate_list,target_doc):
 		if target_doc[i][j][1] == 'O':
 			target_doc[i][j] = ne
 
-
 ######### IO #####################################
 def write_result(testdoc, name):
 	f = cache.open_cache(name,'w')
@@ -143,29 +152,8 @@ token_map = {
 }
 
 def token_altering(token):
-	if token in token_map:
-		return token_map[token]
-	else:
-		return token
+	return token in token_map and token_map[token] or token
 
-##################################################
-######## UNIT TEST ###############################
-##################################################
 if __name__ == "__main__":
 	data = [parse(util.build_name_txt(util.directory, "CLEF_2011_GS")), parse(util.build_name_txt(util.directory, "CLEF_2012_GS"))]
 	preprocess(data)
-
-	#k = sentence_splitter(data[0]["doc"])
-
-	#k = map(nltk.word_tokenize, k)
-	#k = map(nltk.pos_tag, k)
-	
-
-	#k = map(st.tag,k)
-	#print st.tag('Rami Eid is studying at Stony Brook University in NY'.split()) 
-
-
-
-	#k = map(nltk.chunk.named_entity.NEChunkParser.parse,k)
-	#for i in k:
-	#	print i
