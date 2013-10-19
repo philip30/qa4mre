@@ -1,4 +1,4 @@
-#!/usr/bin/python
+ #!/usr/bin/python
 
 # (C) Copyright 2013 Philip Arthur, NAIST
 # 
@@ -21,6 +21,8 @@ from configuration import input as input
 
 def download(name, url, force):
 	try:
+		if not os.path.exists(directory):
+			os.makedirs(directory)
 		file_path = directory + "/" + name + ".txt"
 		if force or not os.path.exists(file_path):
 			print "Downloading ", name,
@@ -41,11 +43,6 @@ def download(name, url, force):
 
 
 def download_all_files(force = False):
-	print "Preparing input..."
-	if not os.path.exists(directory):
-		os.makedirs(directory)
-
-
 	for name, url in input.iteritems():
 		if not download(name, url, force):
 			break;

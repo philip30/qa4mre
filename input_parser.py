@@ -12,6 +12,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # Lesser General Public License for more details.
 
+import sys
 import nltk
 import re
 import xml.etree.ElementTree as etree
@@ -23,15 +24,16 @@ tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 def sentence_splitter(d):
 	d = re.sub(r"\n",". ",d)
-	d = re.sub("\.{2,}",". ",d)
-	d = re.sub("^.","", d)
-	d = re.sub("--", " ",d)
-	d = re.sub(" {2,}"," ",d)
-	d = re.sub("/", " ",d)
-	return tokenizer.tokenize(d)
+	d = re.sub(r"\.{2,}",". ",d)
+	d = re.sub(r"^.","", d)
+	d = re.sub(r"--", " ",d)
+	d = re.sub(r" {2,}"," ",d)
+	d = re.sub(r"/", " ",d)
+	d = re.sub(r"\."," . ",d)
+	return map (lambda x : " ".join(nltk.word_tokenize(x)),tokenizer.tokenize(d))
 
 def parse(filename):
-	tree = etree.parse(filename)
+	tree = etree.parse(build_name(directory, filename))
 	root = tree.getroot()
 
 	tests = []
@@ -56,7 +58,7 @@ def parse(filename):
 	return tests
 
 def get_example():
-	return parse(build_name(directory, "CLEF_2011_GS"))
+	return parse("CLEF_2011_GS")
 
 if __name__ == "__main__":
 	print(get_example()[0])

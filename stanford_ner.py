@@ -15,7 +15,6 @@
 from configuration import STANFORD_NER_TAGSET_PATH as tagset_path
 from configuration import STANFORD_NER_JAR_PATH as jar_path
 from configuration import STANFORD_NER_JVM_MEMORY as memory
-from util import count_leaves as count_line
 from util import traverse_test_set as traverse
 from util import traverse_test_set_with_assignment as traverse_assignment
 from util import traverse_test_set_root as traverse_root 
@@ -30,7 +29,8 @@ import input_parser
 #static initialization
 merged_name = "1-merged.txt"
 ne_tagged_name = "2-netagged.txt"
-command = 'java ' + memory + ' -cp '+ jar_path +' edu.stanford.nlp.ie.crf.CRFClassifier -loadClassifier ' + tagset_path + ' --textFile cache/' + merged_name + ' > cache/' + ne_tagged_name
+command = 'java ' + memory + ' -cp '+ jar_path +' edu.stanford.nlp.ie.crf.CRFClassifier -tokenizerFactory edu.stanford.nlp.process.WhitespaceTokenizer -tokenizerOptions "tokenizeNLs=true" '\
+	'-loadClassifier ' + tagset_path + ' --textFile cache/' + merged_name + ' > cache/' + ne_tagged_name
 	
 
 class StanfordNER():
@@ -45,7 +45,7 @@ class StanfordNER():
 
 	def read_ner(self,f):
 		value = []
-		tokens = self.read_until_not_period(f).strip().split(' ')
+		tokens = f.readline().strip().split(' ')
 		_tag, _word, i = '','',0
 		while i < len(tokens):
 			word = tokens[i].split('/')
@@ -63,12 +63,10 @@ class StanfordNER():
 			i += 1
 		return value
 
-
-
 	def read_until_not_period(self,f):
 		while True:
 			line = f.readline()
-			if line.split('/')[0] != '.':
+			if not line.startswith('.'):
 				return line
 		return ''
 
