@@ -116,9 +116,10 @@ def _coreference_resolution(test_doc):
 	# for the remaining unreferenced, look up the entire latest_ne list
 	for tag, unreferenced_list in unreferenced_pronoun.items():
 		for i,j in unreferenced_list:
-			ne = look_up_ne(tag,latest_ne,len(latest_ne))
-			if ne != None:
-				test_doc[i][j] = ne
+			if test_doc[i][j][1] == 'O':
+				ne = look_up_ne(tag,latest_ne,len(latest_ne))
+				if ne != None:
+					test_doc[i][j] = ne
 
 def look_up_ne(expected, latest, look_up_threshold):
 	for i in range (0, look_up_threshold):
