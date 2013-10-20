@@ -18,6 +18,7 @@ import configuration
 import input_downloader
 import input_parser
 import preprocessing
+import model_builder
 
 parser = argparse.ArgumentParser(description="Run QA-CLEF-System")
 parser.add_argument('--preprocess',action="store_true")
@@ -26,16 +27,18 @@ parser.add_argument('--data',nargs = '+',default=[2011,2012],type=int)
 parser.add_argument('--test',nargs = '+',default=[2013],type=int)
 parser.add_argument('--forcedownload',action='store_true')
 parser.add_argument('--selftest',action="store_true")
+parser.add_argument('--n_gram', type=int, default=3)
 args = parser.parse_args()
 
 def main():
 	input_check(args.data+args.test, args.forcedownload)
+	process_args(args)
 
 	data = input_parse(args.data + args.test)
 	data = preprocessing.preprocess(data)
 
-	#training_model = build_model(data[:len(args.data)])
-	#test_model = build_model(data[-len(args.test):])
+	training_model = model_builder.build_model(data[:len(args.data)])
+	test_model = model_builder.build_model(data[-len(args.test):])
 
 def input_check(data, force):
 	for edition in data:
@@ -48,6 +51,9 @@ def input_parse(data):
 	for edition in data:
 		parsed_data.append(input_parser.parse(configuration.input.keys()[edition-2011]))
 	return parsed_data
+
+def process_args(args):
+	model_builder.n_gram = args.n_gram
 
 if __name__ == '__main__':
 	main()

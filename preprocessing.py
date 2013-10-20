@@ -53,6 +53,7 @@ def preprocess(testdoc,tag_ner=True):
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
 
 	write_result(testdoc, '5-stop-word-cleaning-stemming.txt')
+	return testdoc
 
 ######### CO-REFERENCE RESOLUTION ################
 pronoun = set(['i','my','mine','she','he','it', 'his', 'her', 'they', 'them', 'their', 'him', 'himself', 'herself', 'myself', 'themselves', 'itself'])
@@ -114,7 +115,7 @@ def _coreference_resolution(test_doc):
 					reference_ne(latest_ne[0],unreferenced_pronoun[is_speaker and 'SPEAKER' or tag],test_doc)
 
 	# for the remaining unreferenced, look up the entire latest_ne list
-	for tag, unreferenced_list in unreferenced_pronoun.items():
+	for tag, unreferenced_list in unreferenced_pronoun.iteritems():
 		for i,j in unreferenced_list:
 			if test_doc[i][j][1] == 'O':
 				ne = look_up_ne(tag,latest_ne,len(latest_ne))
@@ -156,5 +157,5 @@ def token_altering(token):
 	return token in token_map and token_map[token] or token
 
 if __name__ == "__main__":
-	data = [parse(util.build_name_txt(util.directory, "CLEF_2011_GS")), parse(util.build_name_txt(util.directory, "CLEF_2012_GS"))]
+	data = [parse("CLEF_2011_GS"), parse("CLEF_2012_GS")]
 	preprocess(data)
