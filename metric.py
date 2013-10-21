@@ -25,21 +25,30 @@ threshold = 0.1 # l
 # idf(t,D) =  log (---------------------------------------------)
 #                  1 + (number of sentence where term t occurs)
 # log is in base 10
-def idf(self,D,v):
-	return log(float(D) / (1 + v), 10)
+def idf(D,v):
+	return math.log(float(D) / (1 + v), 10)
 
 # cosine similarity
 # q and dj is already in tf-idf form
-def sim(self,q,dj):
+def sim(q,dj):
+	if len(q) == 0 or len(dj) == 0: return 0 
 	return dot_product(q,dj) / (norm_2(q) * norm_2(dj))
 
 # v1 and v2 are dictionary of occurences
-def dot_product(self,v1,v2):
+def dot_product(v1,v2):
 	return sum ([value * v2[word] for (word,value) in v1.items() if word in v2])
 
-def norm_2(self,v):
-	return math.sqrt(sum([x**2 for x in v]))
+def norm_2(v):
+	return math.sqrt(sum([x**2 for x in v.values()]))
 
+def merge(v1,v2):
+	v1_v2 = {_v2:v2_ for (_v2,v2_) in v2.items()}
+	for key,value in v1.items():
+		if key in v1_v2:
+			v1_v2[key] += value
+		else:
+			v1_v2[key] = value
+	return v1_v2 
 
 class FeaturesScoring:
 
@@ -47,50 +56,55 @@ class FeaturesScoring:
 		self.D1 = set(self.find_match(D,q))
 		self.r = self.find_r(D,q)
 
-	def greatest_cosine(self,p,D):
-		return max([sim(p,dj) for dj in D])
+	def greatest_cosine(self,q,ak,D):
+		p = merge(q,ak)
+		return max([sim(p,dj['tf-idf']) for dj in D])
 
 	def greatest_matching(self,q,ak,D):
 		p = set(q.keys() + ak.keys()) # p is set of distinct keywords between question and candidate
 		return max([len([x for x in dj.keys() if x in p]) for dj in D])
 		
-	def cosine_matching(self,ak,D):
+	def cosine_matching(self,q,ak,D):
 		D2 = set(self.find_match(D,ak))
 		return len ([d for d in self.D1 if d in D2])
 
 	def closest_sentence(self,q,ak,D):
 		D2 = set(self.find_match(D,ak))
-		if len(D1) == 0 or len (D2) == 0:
+		if len(self.D1) == 0 or len (D2) == 0:
 			return None
 		else:
-			return min([math.abs(x-y) for x in D1 for y in D2])
+			return min([abs(x-y) for x in self.D1 for y in D2])
 
 	def closest_matching(self,q,ak,D):
 		if len(self.r) == 0:
 			return None
 		else:
-			D2 = find_match(D, ak)
-			if len(D2) != 0
-				return min([math.abs(x-y) for x in self.r for y in D2])
+			D2 = self.find_match(D, ak)
+			if len(D2) != 0:
+				return min([abs(x-y) for x in self.r for y in D2])
 			else:
 				return None
 
+	# this feature is not in the paper
+	def average_cosine(self,q,ak,D):
+		p = merge(q,ak)
+		return sum(sim(p,dj['tf-idf']) for dj in D)/len(D)
+
 	def find_match(self,doc, d):
 		match = []
-		i=0
-		for sentence in doc:
-			if sim(sentence, d) > threshold:
+		for i in range (0,len(doc)):
+			sentence = doc[i]
+			if sim(sentence['tf-idf'], d) > threshold:
 				match.append(i)
-			i+=i
 		return match
 
 	def find_r(self,doc,q):
 		r = set([])
-		sentence_similarity = [sim(d,q) for d in doc if sim(d,q) > threshold]
-		max_similarity = max(sentence_similarity)
+		sentence_similarity = [sim(d['tf-idf'],q) for d in doc if sim(d['tf-idf'],q) > threshold]
+		max_similarity = len(sentence_similarity) > 0 and max(sentence_similarity) or 0
 		i = 0 
 		for similarity in sentence_similarity:
 			if similarity == max_similarity:
-				r.append(i)
+				r.add(i)
 			i+=1
 		return r
