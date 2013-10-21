@@ -16,6 +16,7 @@ import sys
 import util
 from math import log	
 from collections import Counter	
+from metric import idf
 
 # static initialization
 n_gram = 3
@@ -88,13 +89,5 @@ def build_idf_map(sentences):
 			else:
 				sequence_of_words[word] = 1
 
-	D = len(sentences)
-
-	# IDF 
-	#                                     |D|
-	# idf(t,D) =  log (---------------------------------------------)
-    #                   1 + (number of sentence where term t occurs)
-    # log is in base 10
-    ##################################################################
-	sequence_of_words = {k: log(float(D) / (1 + v), 10) for k, v in sequence_of_words.iteritems()}
+	sequence_of_words = {k: idf(D=len(sentences),v=v) for k, v in sequence_of_words.iteritems()}
 	return sequence_of_words

@@ -61,6 +61,8 @@ class StanfordNER():
 					_word,_tag = '', ''
 				value.append((word[0],word[1]))
 			i += 1
+		if len(_word) != 0:
+			value.append((_word,_tag))
 		return value
 
 	def read_until_not_period(self,f):

@@ -19,6 +19,7 @@ import input_downloader
 import input_parser
 import preprocessing
 import model_builder
+import scoring
 
 parser = argparse.ArgumentParser(description="Run QA-CLEF-System")
 parser.add_argument('--preprocess',action="store_true")
@@ -34,11 +35,19 @@ def main():
 	input_check(args.data+args.test, args.forcedownload)
 	process_args(args)
 
+	# parsing
 	data = input_parse(args.data + args.test)
+	
+	# preprocessing
 	data = preprocessing.preprocess(data)
 
+	# build-mode
 	training_model = model_builder.build_model(data[:len(args.data)])
 	test_model = model_builder.build_model(data[-len(args.test):])
+
+	# scoring
+	scoring.score(training_model)
+	scoring.score(test_model)
 
 def input_check(data, force):
 	for edition in data:
