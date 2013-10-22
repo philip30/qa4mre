@@ -21,16 +21,18 @@ import input_parser
 import preprocessing
 import model_builder
 import scoring
+import operator
 from collections import defaultdict
 from tmert import execute_mert as mert_training
 
 parser = argparse.ArgumentParser(description="Run QA-CLEF-System")
 parser.add_argument('--preprocess',action="store_true")
 parser.add_argument('--train',action="store_true")
+parser.add_argument('--answeronly',action='store_true')
+parser.add_argument('--selftest',action='store_true')
 parser.add_argument('--data',nargs = '+',default=[2011],type=int)
 parser.add_argument('--test',nargs = '+',default=[],type=int)
 parser.add_argument('--forcedownload',action='store_true')
-parser.add_argument('--selftest',action="store_true")
 parser.add_argument('--n_gram', type=int, default=3)
 parser.add_argument('--threshold', type=float, default=0.5)
 args = parser.parse_args()
@@ -68,6 +70,14 @@ def main():
 	else:
 		print >> sys.stderr, 'Weight is found on cache/weight.txt'
 
+	# weighted_scoring
+	print >> sys.stderr, 'Weighted Scoring...'
+	final = scoring.weighted_scoring(args.selftest and training_model or test_model, weight)
+
+	# answer selection
+	select_answer(final)
+	print final
+
 def input_check(data, force):
 	for edition in data:
 		if not input_downloader.download(configuration.input.keys()[edition-2011],
@@ -102,10 +112,56 @@ def train(model):
 	best_weight = mert_training(questions,feature_names)
 	qacache.store_weight(best_weight)
 
-	print best_weight
+def select_answer(data):
+	for model in data:
+		for test_set in model:
+			for question in test_set['q']:
+				
+				for i in range(0,len(question['answer'])):
+					candidate = question['answer'][i]
+					candidate['total_score'] = sum(candidate['weighted_score'].values())
+					
+				_max = max([y['total_score'] for y in question['answer']])
+				for i in range (0, len(question['answer'])):
+					if _max == question['answer'][i]['total_score']:
+						_index = i
+						break
+				totals = list(enumerate([candidate['total_score'] for candidate in question['answer']]))
+				up_threshold = [abs(_max - score) > args.threshold for (index, score) in totals if index != _index]
+
+				if reduce(operator.and_,up_threshold):
+					question['output'] =  _index 
+				else:
+					question['output'] = None
+
 
 if __name__ == '__main__':
 	main()
+	
+"""
+question = { 
+	'answer': [
+		{'total_score':1},
+		{'total_score':52},
+		{'total_score':50},
+		{'total_score':48},
+		{'total_score':50}
+	]
+}
+
+
+for i in range (0, len(question['answer'])):
+	if _max == question['answer'][i]['total_score']:
+		_index = i
+		break
+
+print _max, _index
+
+x = reduce(operator.and_, [(_max - score > 1) for (index, score) in list(enumerate([candidate['total_score'] for candidate in question['answer']])) if index != _index]) and _index or None
+print x
+
+"""
+
 
 
 
