@@ -17,12 +17,44 @@ import random
 import argparse
 from collections import defaultdict
 
-parser = argparse.ArgumentParser(description="Run mert on question answering systems")
-parser.add_argument('--init_weight_file', type=str)
-parser.add_argument('--random_restarts', default=20, type=int)
-parser.add_argument('--threshold_only', action="store_true")
-parser.add_argument('--threshold', default=1, type=float)
-args = parser.parse_args()
+# main method
+def main():
+    parser = argparse.ArgumentParser(description="Run mert on question answering systems")
+    parser.add_argument('--init_weight_file', type=str)
+    parser.add_argument('--random_restarts', default=20, type=int)
+    parser.add_argument('--threshold_only', action="store_true")
+    parser.add_argument('--threshold', default=1, type=float)
+    args = parser.parse_args()
+
+    # Data
+    questions = defaultdict(lambda: [])
+    feat_names = {}
+
+    # load the file
+    for line in sys.stdin:
+        line = line.strip()
+        (qid, correct, feat_str) = line.split(" ||| ")
+        feats = {}
+        for entry in feat_str.split(" "):
+            (k, v) = entry.split("=")
+            feats[k] = float(v)
+            feat_names[k] = 1
+        questions[qid].append( (int(correct), feats) )
+    
+    # Run mert with:
+    # Initial weights if we have them
+    init_weights = {}
+    if args.init_weight_file:
+        init_weight_file = open(args.init_weight_file, "r")
+        for line in init_weight_file:
+            k, v = line.split(" ")
+            init_weights[k] = float(v)
+        init_weight_file.close()
+
+    best_weights = execute_mert(questions, feat_names, init_weights, args.threshold,args.random_restarts, args.threshold_only)
+
+    for k, v in best_weights.items():
+        print "%s %f" % (k, v)
 
 # Parameters
 margin = 1
@@ -291,32 +323,4 @@ def execute_mert(questions, feat_names, init_weights={}, threshold=1, random_res
 
 ############################ START #################################
 if __name__ == '__main__':
-    # Data
-    questions = defaultdict(lambda: [])
-    feat_names = {}
-
-    # load the file
-    for line in sys.stdin:
-        line = line.strip()
-        (qid, correct, feat_str) = line.split(" ||| ")
-        feats = {}
-        for entry in feat_str.split(" "):
-            (k, v) = entry.split("=")
-            feats[k] = float(v)
-            feat_names[k] = 1
-        questions[qid].append( (int(correct), feats) )
-    
-    # Run mert with:
-    # Initial weights if we have them
-    init_weights = {}
-    if args.init_weight_file:
-        init_weight_file = open(args.init_weight_file, "r")
-        for line in init_weight_file:
-            k, v = line.split(" ")
-            init_weights[k] = float(v)
-        init_weight_file.close()
-
-    best_weights = execute_mert(questions, feat_names, init_weights, args.threshold,args.random_restarts, args.threshold_only)
-
-    for k, v in best_weights.items():
-        print "%s %f" % (k, v)
+    main()
