@@ -58,22 +58,22 @@ class FeaturesScoring:
 
 	def greatest_cosine(self,q,ak,D):
 		p = merge(q,ak)
-		return max([sim(p,dj['tf-idf']) for dj in D])
+		return float(max([sim(p,dj['tf-idf']) for dj in D]))
 
 	def greatest_matching(self,q,ak,D):
 		p = set(q.keys() + ak.keys()) # p is set of distinct keywords between question and candidate
-		return max([len([x for x in dj.keys() if x in p]) for dj in D])
+		return float(max([len([x for x in dj.keys() if x in p]) for dj in D]))
 		
 	def cosine_matching(self,q,ak,D):
 		D2 = set(self.find_match(D,ak))
-		return len ([d for d in self.D1 if d in D2])
+		return float(len ([d for d in self.D1 if d in D2]))
 
 	def closest_sentence(self,q,ak,D):
 		D2 = set(self.find_match(D,ak))
 		if len(self.D1) == 0 or len (D2) == 0:
 			return None
 		else:
-			return min([abs(x-y) for x in self.D1 for y in D2])
+			return float(min([abs(x-y) for x in self.D1 for y in D2]))
 
 	def closest_matching(self,q,ak,D):
 		if len(self.r) == 0:
@@ -81,14 +81,14 @@ class FeaturesScoring:
 		else:
 			D2 = self.find_match(D, ak)
 			if len(D2) != 0:
-				return min([abs(x-y) for x in self.r for y in D2])
+				return float(min([abs(x-y) for x in self.r for y in D2]))
 			else:
 				return None
 
 	# this feature is not in the paper
 	def average_cosine(self,q,ak,D):
 		p = merge(q,ak)
-		return sum(sim(p,dj['tf-idf']) for dj in D)/len(D)
+		return float(sum(sim(p,dj['tf-idf']) for dj in D)/len(D))
 
 	def find_match(self,doc, d):
 		match = []

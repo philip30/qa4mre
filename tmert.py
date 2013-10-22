@@ -218,14 +218,14 @@ def line_search(questions, weights, gradient, threshold):
     if positions:
         # Given the different values, find the one with the lowest error
         positions.append(positions[-1]+2*margin) # to make the calculation loop easier
-        best_score = c_at_1(base_values[0], base_values[1], total_count)
+        best_score = c_at_1(base_values[0], base_values[1], len(questions))
         best_pos = min(positions[0] - margin, 0)
         best_values = list(base_values)
         for k in range(0, len(diff_values)):
             pos = positions[k]
             base_values[0] += diff_values[pos][0]
             base_values[1] += diff_values[pos][1]
-            my_score = c_at_1(base_values[0], base_values[1], total_count)
+            my_score = c_at_1(base_values[0], base_values[1], len(questions))
             if my_score > best_score:
                 best_score = my_score
                 if positions[k] < 0 and positions[k+1] > 0:
@@ -235,24 +235,25 @@ def line_search(questions, weights, gradient, threshold):
                 best_values = list(base_values)
         weights = vec_sum(weights, vec_scalar_product(gradient, best_pos))
     act_values = calc_answers(questions, weights, threshold)
-    act_score = c_at_1(act_values[0], act_values[1], total_count)
+    act_score = c_at_1(act_values[0], act_values[1], len(questions))
     # if act_values != best_values:
     #     print "ERROR: act_values %r != best_values %r" % (act_values, best_values)
     #     sys.exit(1)
     return (weights, act_score)
 
-def run_mert(questions, init_weights, threshold):
+def run_mert(questions, init_weights, threshold, threshold_only, feat_names):
     # Initialize
     weights = init_weights
     score_before = -1
     score_after = 0
+
     # Do the loop
     act_values = calc_answers(questions, weights, threshold)
-    act_score = c_at_1(act_values[0], act_values[1], total_count)
+    act_score = c_at_1(act_values[0], act_values[1], len(questions))
     # print >> sys.stderr, "BEFORE C@1=%r, threshold=%r, weights=%r" % (act_score, threshold, weights)
     while score_before < score_after:
         score_before = score_after
-        if not args.threshold_only:
+        if not threshold_only:
             for name in feat_names.keys():
                 gradient = {name: 1}
                 (weights, score_after) = line_search(questions, weights, gradient, threshold)
@@ -261,58 +262,61 @@ def run_mert(questions, init_weights, threshold):
         (weights, score_after) = line_search(questions, weights, gradient, threshold)
         # print >> sys.stderr, "C@1=%r, threshold=%r, weights=%r" % (score_after, threshold, weights)
     act_values = calc_answers(questions, weights, threshold)
-    act_score = c_at_1(act_values[0], act_values[1], total_count)
+    act_score = c_at_1(act_values[0], act_values[1], len(questions))
     print >> sys.stderr, "FINAL C@1=%r, threshold=%r, weights=%r" % (act_score, threshold, weights)
     return (score_after, weights)
 
+def execute_mert(questions, feat_names, init_weights={}, threshold=1, random_restarts=20,threshold_only=False):
+    best_weights = {}
+    if len(questions) > 0: # there is some work to do!
+        (best_score, best_weights) = run_mert(questions, dict(init_weights), threshold, threshold_only,feat_names)
+        if not len(init_weights):
+            # one weight initialized
+            for name in feat_names.keys():
+                (next_score, next_weights) = run_mert(questions, {name: 1}, threshold, threshold_only,feat_names)
+                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
+                (next_score, next_weights) = run_mert(questions, {name: -1}, threshold, threshold_only,feat_names)
+                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
+            # random initalization
+            for i in range(0, random_restarts):
+                init_weights = dict()
+                for name in feat_names.keys():
+                    init_weights[name] = random.uniform(0, 100)
+                (next_score, next_weights) = run_mert(questions, init_weights, threshold, threshold_only,feat_names)
+                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
+
+        print >> sys.stderr, ""
+        print >> sys.stderr, "BEST: C@1=%r, threshold=%r, weights=%r" % (best_score, args.threshold, best_weights)
+    return best_weights
+
 ############################ START #################################
+if __name__ == '__main__':
+    # Data
+    questions = defaultdict(lambda: [])
+    feat_names = {}
 
-# Data
-questions = defaultdict(lambda: [])
-feat_names = {}
+    # load the file
+    for line in sys.stdin:
+        line = line.strip()
+        (qid, correct, feat_str) = line.split(" ||| ")
+        feats = {}
+        for entry in feat_str.split(" "):
+            (k, v) = entry.split("=")
+            feats[k] = float(v)
+            feat_names[k] = 1
+        questions[qid].append( (int(correct), feats) )
+    
+    # Run mert with:
+    # Initial weights if we have them
+    init_weights = {}
+    if args.init_weight_file:
+        init_weight_file = open(args.init_weight_file, "r")
+        for line in init_weight_file:
+            k, v = line.split(" ")
+            init_weights[k] = float(v)
+        init_weight_file.close()
 
-# load the file
-for line in sys.stdin:
-    line = line.strip()
-    (qid, correct, feat_str) = line.split(" ||| ")
-    feats = {}
-    for entry in feat_str.split(" "):
-        (k, v) = entry.split("=")
-        feat_names[k] = 1
-        feats[k] = float(v)
-    questions[qid].append( (int(correct), feats) )
+    best_weights = execute_mert(questions, feat_names, init_weights, args.threshold,args.random_restarts, args.threshold_only)
 
-# Initially the best weights are zero
-total_count = len(questions)
-
-# Run mert with:
-# Initial weights if we have them
-init_weights = {}
-if args.init_weight_file:
-    init_weight_file = open(args.init_weight_file, "r")
-    for line in init_weight_file:
-        k, v = line.split(" ")
-        init_weights[k] = float(v)
-    init_weight_file.close()
-
-(best_score, best_weights) = run_mert(questions, dict(init_weights), args.threshold)
-if not len(init_weights):
-    # one weight initialized
-    for name in feat_names.keys():
-        (next_score, next_weights) = run_mert(questions, {name: 1}, args.threshold)
-        if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
-        (next_score, next_weights) = run_mert(questions, {name: -1}, args.threshold)
-        if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
-    # random initalization
-    for i in range(0, args.random_restarts):
-        init_weights = dict()
-        for name in feat_names.keys():
-            init_weights[name] = random.uniform(0, 100)
-        (next_score, next_weights) = run_mert(questions, init_weights, args.threshold)
-        if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
-
-print >> sys.stderr, ""
-print >> sys.stderr, "BEST: C@1=%r, threshold=%r, weights=%r" % (best_score, args.threshold, best_weights)
-
-for k, v in best_weights.items():
-    print "%s %f" % (k, v)
+    for k, v in best_weights.items():
+        print "%s %f" % (k, v)

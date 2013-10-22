@@ -14,21 +14,25 @@
 
 import sys
 import argparse
+import qacache
 import configuration
 import input_downloader
 import input_parser
 import preprocessing
 import model_builder
 import scoring
+from collections import defaultdict
+from tmert import execute_mert as mert_training
 
 parser = argparse.ArgumentParser(description="Run QA-CLEF-System")
 parser.add_argument('--preprocess',action="store_true")
 parser.add_argument('--train',action="store_true")
-parser.add_argument('--data',nargs = '+',default=[2011,2012],type=int)
-parser.add_argument('--test',nargs = '+',default=[2013],type=int)
+parser.add_argument('--data',nargs = '+',default=[2011],type=int)
+parser.add_argument('--test',nargs = '+',default=[],type=int)
 parser.add_argument('--forcedownload',action='store_true')
 parser.add_argument('--selftest',action="store_true")
 parser.add_argument('--n_gram', type=int, default=3)
+parser.add_argument('--threshold', type=float, default=0.5)
 args = parser.parse_args()
 
 def main():
@@ -41,13 +45,18 @@ def main():
 	# preprocessing
 	data = preprocessing.preprocess(data)
 
-	# build-mode
+	# build-model
 	training_model = model_builder.build_model(data[:len(args.data)])
-	test_model = model_builder.build_model(data[-len(args.test):])
+	test_model = args.test and model_builder.build_model(data[-len(args.test):]) or []
 
 	# scoring
-	scoring.score(training_model)
-	scoring.score(test_model)
+	training_model and scoring.score(training_model)
+	test_model and scoring.score(test_model)
+
+	# training
+	weight = qacache.stored_weight()
+	if args.train or weight is None:
+		weight = train(training_model)
 
 def input_check(data, force):
 	for edition in data:
@@ -64,5 +73,29 @@ def input_parse(data):
 def process_args(args):
 	model_builder.n_gram = args.n_gram
 
+def train(model):
+	questions = defaultdict(lambda: []) # empty list as default value
+	features_names = {}
+
+	# build input for tmert
+	for _model in model:
+		for i in range(0,len(_model)):
+			for j in range (0, len(_model[i]['q'])):
+				qs = _model[i]['q'][j]['answer']
+				for candidate in qs:
+					_id = str(i) + str(j)
+					feats = candidate['score']
+					feature_names = {name: 1 for name in feats.keys()}
+					correct = 'correct' in candidate and candidate['correct'] and 1 or 0
+					questions[_id].append((int(correct), feats))
+
+	best_weight = mert_training(questions,feature_names)
+	qacache.store_weight(best_weight)
+
+	print best_weight
+
 if __name__ == '__main__':
 	main()
+
+
+

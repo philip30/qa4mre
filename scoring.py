@@ -39,13 +39,10 @@ def _score(test_set):
 
 		# scoring
 		score_candidate(doc, problem, candidates)
-	
-	print questions[1]
 
 def score_candidate(doc, problem, candidates):
 	scorer = metric.FeaturesScoring(doc,problem['tf-idf'])
 	
-
 	for candidate in candidates:
 		score = {}
 		score['cosine_matching'] = scorer.cosine_matching(problem['tf-idf'],candidate['tf-idf'],doc)
@@ -58,10 +55,10 @@ def score_candidate(doc, problem, candidates):
 		# unmatch features
 		for feature, value in score.items():
 			if value is None:
-				score[feature] = 0
-				score['unmatch'] = 1
+				score[feature] = 0.0
+				score['unmatch'] = 1.0
 			elif not ('unmatch' in score):
-				score['unmatch'] = 0
+				score['unmatch'] = 0.0
 		candidate['score'] = score
 
 def map_to_tf_idf(vectors, idf_map):

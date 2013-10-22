@@ -13,8 +13,25 @@
 # Lesser General Public License for more details.
 
 import os
+import sys
+import json
 
 def open_cache(dir,command):
 	if not os.path.exists("cache"):
 		os.makedirs("cache")
 	return open("cache/"+dir,command)
+
+def stored_weight():
+	if os.path.exists('cache/weight.txt'):
+		try:
+			with open_cache('weight.txt','r') as f:
+				return json.load(f)
+		except Exception:
+			print sys.stderr >> 'Could not load weight, executing re-training'
+			return None
+	else:
+		return None
+
+def store_weight(data):
+	with open_cache('weight.txt', 'w') as f:
+		f.write(json.dump(data))
