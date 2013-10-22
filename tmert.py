@@ -17,7 +17,7 @@ import random
 import argparse
 from collections import defaultdict
 
-# main method
+# Main Method
 def main():
     parser = argparse.ArgumentParser(description="Run mert on question answering systems")
     parser.add_argument('--init_weight_file', type=str)
@@ -55,6 +55,60 @@ def main():
 
     for k, v in best_weights.items():
         print "%s %f" % (k, v)
+
+# Public Method
+# This is a public method which can be used from other python scripts.
+# Param:
+#   - questions
+#        list of tuple which stores all candidate answers.
+#        questions = [
+#            choice(1,1) 
+#            choice(1,2)
+#            choice(1,3)
+#            ....
+#            choice(q,c)
+#        ]
+#        where q = number of question and c = number of choices and
+#        choice(qj,cj) = ( 1 if is_correct(qj,cj) else 0 , feats_score )
+#        feats_score = dictionary which map features score of each candidate to its score:
+#        {
+#            feat_1: score_feat_1 
+#            ...
+#            feat_n: score_feat_n
+#        }
+#   - feat_names
+#        dictionary of all features_names which have values of 1s
+#        {
+#            feat_1: 1
+#            feat_2: 1
+#            ...
+#            feat_n: 1
+#        }
+#   - threshold: value of threshold
+#   - random_restart: number of restart (script will find the best value)
+#
+def execute_mert(questions, feat_names, init_weights={}, threshold=1.0, random_restarts=20,threshold_only=False):
+    best_weights = {}
+    if len(questions) > 0: # there is some work to do!
+        (best_score, best_weights) = run_mert(questions, dict(init_weights), threshold, threshold_only,feat_names)
+        if not len(init_weights):
+            # one weight initialized
+            for name in feat_names.keys():
+                (next_score, next_weights) = run_mert(questions, {name: 1}, threshold, threshold_only,feat_names)
+                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
+                (next_score, next_weights) = run_mert(questions, {name: -1}, threshold, threshold_only,feat_names)
+                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
+            # random initalization
+            for i in range(0, random_restarts):
+                init_weights = dict()
+                for name in feat_names.keys():
+                    init_weights[name] = random.uniform(0, 100)
+                (next_score, next_weights) = run_mert(questions, init_weights, threshold, threshold_only,feat_names)
+                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
+
+        print >> sys.stderr, ""
+        print >> sys.stderr, "BEST: C@1=%r, threshold=%r, weights=%r" % (best_score, threshold, best_weights)
+    return best_weights
 
 # Parameters
 margin = 1
@@ -297,29 +351,6 @@ def run_mert(questions, init_weights, threshold, threshold_only, feat_names):
     act_score = c_at_1(act_values[0], act_values[1], len(questions))
     print >> sys.stderr, "FINAL C@1=%r, threshold=%r, weights=%r" % (act_score, threshold, weights)
     return (score_after, weights)
-
-def execute_mert(questions, feat_names, init_weights={}, threshold=1, random_restarts=20,threshold_only=False):
-    best_weights = {}
-    if len(questions) > 0: # there is some work to do!
-        (best_score, best_weights) = run_mert(questions, dict(init_weights), threshold, threshold_only,feat_names)
-        if not len(init_weights):
-            # one weight initialized
-            for name in feat_names.keys():
-                (next_score, next_weights) = run_mert(questions, {name: 1}, threshold, threshold_only,feat_names)
-                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
-                (next_score, next_weights) = run_mert(questions, {name: -1}, threshold, threshold_only,feat_names)
-                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
-            # random initalization
-            for i in range(0, random_restarts):
-                init_weights = dict()
-                for name in feat_names.keys():
-                    init_weights[name] = random.uniform(0, 100)
-                (next_score, next_weights) = run_mert(questions, init_weights, threshold, threshold_only,feat_names)
-                if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
-
-        print >> sys.stderr, ""
-        print >> sys.stderr, "BEST: C@1=%r, threshold=%r, weights=%r" % (best_score, threshold, best_weights)
-    return best_weights
 
 ############################ START #################################
 if __name__ == '__main__':
