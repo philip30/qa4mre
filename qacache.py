@@ -14,7 +14,7 @@
 
 import os
 import sys
-import json
+import simplejson as json
 
 def open_cache(dir,command):
 	if not os.path.exists("cache"):
@@ -22,16 +22,32 @@ def open_cache(dir,command):
 	return open("cache/"+dir,command)
 
 def stored_weight():
-	if os.path.exists('cache/weight.txt'):
-		try:
-			with open_cache('weight.txt','r') as f:
-				return json.load(f)
-		except Exception:
-			print sys.stderr >> 'Could not load weight, executing re-training'
-			return None
+	try:
+		return open_json('weight.txt')
+	except Exception:
+		print >> sys.stderr, 'Could not load weight, executing re-training.'
+	return None
+
+def store_weight(data):
+	write_json(data,'weight.txt')
+
+def store_preprocessed_data(data):
+	write_json(data,'preprocessed_data.txt')
+
+def preprocessed_data():
+	try:
+		return open_json('preprocessed_data.txt')
+	except Exception:
+		print >> sys.stderr, 'No preprocessed data is found, executing preprocessing.'
+	return None
+	
+def open_json(name):
+	if os.path.exists('cache/' + name):
+		with open_cache(name,'r') as f:
+			return json.load(f)
 	else:
 		return None
 
-def store_weight(data):
-	with open_cache('weight.txt', 'w') as f:
-		f.write(json.dump(data))
+def write_json(data, name):
+	with open_cache(name, 'w') as f:
+		f.write(json.dumps(data))

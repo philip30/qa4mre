@@ -35,28 +35,38 @@ parser.add_argument('--n_gram', type=int, default=3)
 parser.add_argument('--threshold', type=float, default=0.5)
 args = parser.parse_args()
 
-def main():
-	input_check(args.data+args.test, args.forcedownload)
+def main():	
 	process_args(args)
 
-	# parsing
-	data = input_parse(args.data + args.test)
-	
-	# preprocessing
-	data = preprocessing.preprocess(data)
+	data = qacache.preprocessed_data()
+	# parsing and preprocessing
+	if args.preprocess or data is None:
+		# parsing
+		print >> sys.stderr, 'Preprocessing data...'
+		input_check(args.data+args.test, args.forcedownload)
+		data = input_parse(args.data + args.test)
+		data = preprocessing.preprocess(data)
+		qacache.store_preprocessed_data(data)
+	else:
+		print >> sys.stderr, 'Preprocessed data is found on cache/preprocessed_data.txt'
 
 	# build-model
+	print >> sys.stderr, 'Building model...'
 	training_model = model_builder.build_model(data[:len(args.data)])
 	test_model = args.test and model_builder.build_model(data[-len(args.test):]) or []
 
 	# scoring
+	print >> sys.stderr, 'Unweighted Scoring...'
 	training_model and scoring.score(training_model)
 	test_model and scoring.score(test_model)
 
 	# training
 	weight = qacache.stored_weight()
 	if args.train or weight is None:
+		print sys.stderr, 'Training...'
 		weight = train(training_model)
+	else:
+		print >> sys.stderr, 'Weight is found on cache/weight.txt'
 
 def input_check(data, force):
 	for edition in data:
