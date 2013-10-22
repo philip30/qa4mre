@@ -76,8 +76,8 @@ def main():
 
 	# answer selection
 	select_answer(final)
-
 	print final
+
 def input_check(data, force):
 	for edition in data:
 		if not input_downloader.download(configuration.input.keys()[edition-2011],
@@ -112,22 +112,55 @@ def train(model):
 	best_weight = mert_training(questions,feature_names)
 	qacache.store_weight(best_weight)
 
-	print best_weight
-
 def select_answer(data):
 	for model in data:
 		for test_set in model:
 			for question in test_set['q']:
-				_index, _max = -1,-1e10
+				
 				for i in range(0,len(question['answer'])):
 					candidate = question['answer'][i]
 					candidate['total_score'] = sum(candidate['weighted_score'].values())
-					if candidate['total_score'] > _max:
-						_max, _index = candidate['total_score'], i
-				question['output'] = reduce(operator.and_, [(_max > score) for (index, score) in list(enumerate([candidate['total_score'] for candidate in question['answer']])) if index != _index]) and _index or None
+					
+				_max = max([y['total_score'] for y in question['answer']])
+				for i in range (0, len(question['answer'])):
+					if _max == question['answer'][i]['total_score']:
+						_index = i
+						break
+				totals = list(enumerate([candidate['total_score'] for candidate in question['answer']]))
+				up_threshold = [abs(_max - score) > args.threshold for (index, score) in totals if index != _index]
+
+				if reduce(operator.and_,up_threshold):
+					question['output'] =  _index 
+				else:
+					question['output'] = None
+
 
 if __name__ == '__main__':
 	main()
+	
+"""
+question = { 
+	'answer': [
+		{'total_score':1},
+		{'total_score':52},
+		{'total_score':50},
+		{'total_score':48},
+		{'total_score':50}
+	]
+}
+
+
+for i in range (0, len(question['answer'])):
+	if _max == question['answer'][i]['total_score']:
+		_index = i
+		break
+
+print _max, _index
+
+x = reduce(operator.and_, [(_max - score > 1) for (index, score) in list(enumerate([candidate['total_score'] for candidate in question['answer']])) if index != _index]) and _index or None
+print x
+
+"""
 
 
 
