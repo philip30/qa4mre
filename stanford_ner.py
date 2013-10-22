@@ -83,7 +83,7 @@ class StanfordNER():
 		return qacache.open_cache(merged_name,'w')
 
 	def write_test_set(self,f,test_set):
-		traverse_assignment(lambda x: not any(c in x.strip() for c in ['.','!','?']) and x + '.' or x,test_set)
+		traverse_assignment(lambda x: x + '.' if not any(c in x.strip() for c in ['.','!','?']) else x,test_set)
 		traverse(lambda x: util.write_line(f,str(x)),test_set)
 
 

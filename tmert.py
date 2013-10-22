@@ -318,7 +318,7 @@ def execute_mert(questions, feat_names, init_weights={}, threshold=1, random_res
                 if next_score > best_score: (best_score, best_weights) = (next_score, next_weights)
 
         print >> sys.stderr, ""
-        print >> sys.stderr, "BEST: C@1=%r, threshold=%r, weights=%r" % (best_score, args.threshold, best_weights)
+        print >> sys.stderr, "BEST: C@1=%r, threshold=%r, weights=%r" % (best_score, threshold, best_weights)
     return best_weights
 
 ############################ START #################################

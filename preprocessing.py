@@ -44,7 +44,7 @@ def preprocess(testdoc,tag_ner=True):
 	write_result(testdoc, '4-correference-resolution.txt')
 
 	# stop word deletion
-	traverse_all(lambda x: x[0] in used_stop_word_list and ("",x[1]) or x,testdoc, assignment=True)
+	traverse_all(lambda x: ("",x[1]) if x[0] in used_stop_word_list else x,testdoc, assignment=True)
 
 	# stemming
 	traverse_all(lambda x : (stemmer.stem(x[0]),x[1]),testdoc, assignment=True)
@@ -112,7 +112,7 @@ def _coreference_resolution(test_doc):
 					speaker = word
 				latest_ne = [(word,tag)] + latest_ne
 				if not unreferenced_pronoun[tag]: # there is some unreferenced NE
-					reference_ne(latest_ne[0],unreferenced_pronoun[is_speaker and 'SPEAKER' or tag],test_doc)
+					reference_ne(latest_ne[0],unreferenced_pronoun['SPEAKER' if is_speaker else tag],test_doc)
 
 	# for the remaining unreferenced, look up the entire latest_ne list
 	for tag, unreferenced_list in unreferenced_pronoun.iteritems():

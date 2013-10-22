@@ -75,7 +75,7 @@ def score_candidate(doc, problem, candidates):
 def map_to_tf_idf(vectors, idf_map):
 	tf_idf_map = {}
 	for term, occ in vectors.items():
-		tf_idf_map[term] = occ * (term in idf_map and idf_map[term] or idf_map['__default__'])
+		tf_idf_map[term] = occ * (idf_map[term] if term in idf_map else idf_map['__default__'])
 	return tf_idf_map
 
 

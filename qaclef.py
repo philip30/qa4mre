@@ -65,7 +65,7 @@ def main():
 	# training
 	weight = qacache.stored_weight()
 	if args.train or weight is None:
-		print sys.stderr, 'Training...'
+		print >> sys.stderr, 'Training...'
 		weight = train(training_model)
 	else:
 		print >> sys.stderr, 'Weight is found on cache/weight.txt'
@@ -76,7 +76,6 @@ def main():
 
 	# answer selection
 	select_answer(final)
-	print final
 
 def input_check(data, force):
 	for edition in data:
@@ -111,6 +110,7 @@ def train(model):
 
 	best_weight = mert_training(questions,feature_names)
 	qacache.store_weight(best_weight)
+	return best_weight
 
 def select_answer(data):
 	for model in data:
@@ -129,10 +129,7 @@ def select_answer(data):
 				totals = list(enumerate([candidate['total_score'] for candidate in question['answer']]))
 				up_threshold = [abs(_max - score) > args.threshold for (index, score) in totals if index != _index]
 
-				if reduce(operator.and_,up_threshold):
-					question['output'] =  _index 
-				else:
-					question['output'] = None
+				question['output'] = _ index if reduce(operator.and_,up_threshold) else None
 
 
 if __name__ == '__main__':

@@ -101,7 +101,7 @@ class FeaturesScoring:
 	def find_r(self,doc,q):
 		r = set([])
 		sentence_similarity = [sim(d['tf-idf'],q) for d in doc if sim(d['tf-idf'],q) > threshold]
-		max_similarity = len(sentence_similarity) > 0 and max(sentence_similarity) or 0
+		max_similarity = max(sentence_similarity) if len(sentence_similarity) > 0 else 0
 		i = 0 
 		for similarity in sentence_similarity:
 			if similarity == max_similarity:
