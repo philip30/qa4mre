@@ -129,11 +129,12 @@ def vec_scalar_product(feat1, scal2):
     return feat1
 
 def vec_sum(feat1, feat2):
+    ret = {k:v for (k,v) in feat1.items()}
     for k, v in feat2.items():
-        if k not in feat1:
-            feat1[k] = 0
-        feat1[k] += v
-    return feat1
+        if k not in ret:
+            ret[k] = 0
+        ret[k] += v
+    return ret
 
 def c_at_1(correct, unanswered, total):
     return (correct+float(unanswered)*correct/total)/total
@@ -328,6 +329,7 @@ def line_search(questions, weights, gradient, threshold):
     return (weights, act_score)
 
 def run_mert(questions, init_weights, threshold, threshold_only, feat_names):
+
     # Initialize
     weights = init_weights
     score_before = -1
@@ -349,6 +351,7 @@ def run_mert(questions, init_weights, threshold, threshold_only, feat_names):
         # print >> sys.stderr, "C@1=%r, threshold=%r, weights=%r" % (score_after, threshold, weights)
     act_values = calc_answers(questions, weights, threshold)
     act_score = c_at_1(act_values[0], act_values[1], len(questions))
+
     print >> sys.stderr, "FINAL C@1=%r, threshold=%r, weights=%r" % (act_score, threshold, weights)
     return (score_after, weights)
 
