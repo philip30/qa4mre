@@ -99,24 +99,27 @@ def process_args(args):
 	model_builder.n_gram = args.ngram
 
 def train(model):
-	questions = defaultdict(lambda: []) # empty list as default value
-	features_names = {}
+	with qacache.open_cache('qa-mert_input.txt','w') as f:
+		questions = defaultdict(lambda: []) # empty list as default value
+		features_names = {}
 
-	# build input for tmert
-	for _model in model:
-		for i in range(0,len(_model)):
-			for j in range (0, len(_model[i]['q'])):
-				qs = _model[i]['q'][j]['answer']
-				for candidate in qs:
-					_id = str(i) + str(j)
-					feats = candidate['score']
-					feature_names = {name: 1 for name in feats.keys()}
-					correct = 1 if 'correct' in candidate and candidate['correct'] 1 else 0
-					questions[_id].append((int(correct), feats))
+		# build input for tmert
+		for _model in model:
+			for i in range(0,len(_model)):
+				for j in range (0, len(_model[i]['q'])):
+					qs = _model[i]['q'][j]['answer']
+					for candidate in qs:
+						_id = str(i) + str(j)
+						feats = candidate['score']
+						feature_names = {name: 1 for name in feats.keys()}
+						correct = 1 if 'correct' in candidate and candidate['correct'] else 0
+						questions[_id].append((int(correct), feats))
+						f.write(_id + ' ||| ' + str(correct) + ' ||| ' + ' '.join([key + "=" + str(value) for (key, value) in feats.items()]) + '\n')
 
-	best_weight = mert_training(questions,feature_names)
-	qacache.store_weight(best_weight)
-	return best_weight
+		f.close()
+		best_weight = mert_training(questions,feature_names)
+		qacache.store_weight(best_weight)
+		return best_weight
 
 def select_answer(data):
 	for model in data:

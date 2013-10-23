@@ -49,7 +49,7 @@ def weighted_scoring(data, weight):
 def _weighted_scoring(test_set,weight):
 	for question in test_set['q']:
 		for candidate in question['answer']:
-			candidate['weighted_score'] = {feature: (score * weight[feature]) for (feature, score) in candidate['score'].items()}
+			candidate['weighted_score'] = {feature: (score * weight[feature] if feature in weight else 0) for (feature, score) in candidate['score'].items()}
 
 def score_candidate(doc, problem, candidates):
 	scorer = metric.FeaturesScoring(doc,problem['tf-idf'])
