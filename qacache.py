@@ -31,12 +31,15 @@ def stored_weight():
 def store_weight(data):
 	write_json(data,'weight.txt')
 
-def store_preprocessed_data(data):
+def store_preprocessed_data(data,train, test):
 	write_json(data,'preprocessed_data.txt')
+	write_json({'train': train, 'test':test}, 'preprocessed_data.info')
 
-def preprocessed_data():
+def preprocessed_data(train,test):
 	try:
-		return open_json('preprocessed_data.txt')
+		info = open_json('preprocessed_data.info')
+		if len(train) == len(info['train']) and len(test) == len(info['test']) and all( i in train for i in info['train'] ) and all ( i in test for i in info['test'] ):
+			return open_json('preprocessed_data.txt')
 	except Exception:
 		print >> sys.stderr, 'No preprocessed data is found, executing preprocessing.'
 	return None

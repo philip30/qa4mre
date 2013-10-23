@@ -22,6 +22,7 @@ import preprocessing
 import model_builder
 import scoring
 import operator
+from evaluation import evaluate
 from collections import defaultdict
 from tmert import execute_mert as mert_training
 
@@ -31,16 +32,16 @@ parser.add_argument('--train',action="store_true")
 parser.add_argument('--answeronly',action='store_true')
 parser.add_argument('--selftest',action='store_true')
 parser.add_argument('--data',nargs = '+',default=[2011],type=int)
-parser.add_argument('--test',nargs = '+',default=[],type=int)
+parser.add_argument('--test',nargs = '+',default=[2012],type=int)
 parser.add_argument('--forcedownload',action='store_true')
-parser.add_argument('--n_gram', type=int, default=3)
+parser.add_argument('--ngram', type=int, default=3)
 parser.add_argument('--threshold', type=float, default=0.5)
 args = parser.parse_args()
 
 def main():	
 	process_args(args)
 
-	data = qacache.preprocessed_data()
+	data = qacache.preprocessed_data(args.data,args.test)
 	# parsing and preprocessing
 	if args.preprocess or data is None:
 		# parsing
@@ -48,14 +49,14 @@ def main():
 		input_check(args.data+args.test, args.forcedownload)
 		data = input_parse(args.data + args.test)
 		data = preprocessing.preprocess(data)
-		qacache.store_preprocessed_data(data)
+		qacache.store_preprocessed_data(data,args.data,args.test)
 	else:
 		print >> sys.stderr, 'Preprocessed data is found on cache/preprocessed_data.txt'
 
 	# build-model
 	print >> sys.stderr, 'Building model...'
 	training_model = model_builder.build_model(data[:len(args.data)])
-	test_model = args.test and model_builder.build_model(data[-len(args.test):]) or []
+	test_model = model_builder.build_model(data[-len(args.test):]) if len(args.test) != 0 else []
 
 	# scoring
 	print >> sys.stderr, 'Unweighted Scoring...'
@@ -77,6 +78,11 @@ def main():
 	# answer selection
 	select_answer(final)
 
+	# evaluation
+	result = evaluate(final)
+
+	print "Result: %f" % result
+
 def input_check(data, force):
 	for edition in data:
 		if not input_downloader.download(configuration.input.keys()[edition-2011],
@@ -90,7 +96,7 @@ def input_parse(data):
 	return parsed_data
 
 def process_args(args):
-	model_builder.n_gram = args.n_gram
+	model_builder.n_gram = args.ngram
 
 def train(model):
 	questions = defaultdict(lambda: []) # empty list as default value
@@ -129,7 +135,7 @@ def select_answer(data):
 				totals = list(enumerate([candidate['total_score'] for candidate in question['answer']]))
 				up_threshold = [abs(_max - score) > args.threshold for (index, score) in totals if index != _index]
 
-				question['output'] = _ index if reduce(operator.and_,up_threshold) else None
+				question['output'] = _index if reduce(operator.and_,up_threshold) else None
 
 
 if __name__ == '__main__':

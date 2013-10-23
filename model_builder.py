@@ -41,10 +41,14 @@ def _build_model(test_set):
 #           --- unigram ---                                         ---- bigram ---                              --- trigram ---
 def build_n_gram(sentence,n_gram):
 	temp_list = []
-	for _n_gram in range(2,n_gram+1):
-		for i in range(0,len(sentence)-_n_gram+1):
-			word = '_'.join([word for (word, tag) in sentence[i:i+_n_gram]])
-			temp_list.append(tuple((word, str(_n_gram) + '-GRAM')))
+	try:
+		for _n_gram in range(2,n_gram+1):
+			for i in range(0,len(sentence)-_n_gram+1):
+				word = '_'.join([word for (word, tag) in sentence[i:i+_n_gram]])
+				temp_list.append(tuple((word, str(_n_gram) + '-GRAM')))
+	except Exception:
+		print sentence
+		sys.exit(1)
 	return sentence + temp_list
 
 # Transform to Vector
