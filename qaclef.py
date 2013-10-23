@@ -105,7 +105,7 @@ def train(model):
 					_id = str(i) + str(j)
 					feats = candidate['score']
 					feature_names = {name: 1 for name in feats.keys()}
-					correct = 'correct' in candidate and candidate['correct'] and 1 or 0
+					correct = 1 if 'correct' in candidate and candidate['correct'] 1 else 0
 					questions[_id].append((int(correct), feats))
 
 	best_weight = mert_training(questions,feature_names)
