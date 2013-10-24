@@ -45,7 +45,6 @@ class FundamentalTest(unittest.TestCase):
 
 	# Cosine Similarity
 	def testTwo(self):
-		print sim(v1,v2)
 		self.assertEquals(sim(v1,v2),float(dot_product(v1,v2)) / (norm_2(v1) * norm_2(v2)))
 
 	# Merge
@@ -59,6 +58,45 @@ class FundamentalTest(unittest.TestCase):
 			'research':1
 		}
 		self.assertEquals(merge(v1,v2), v1_v2)
+
+# Data for testing [Changes may harm test]
+D = [
+	# sentence 0
+	{'tf-idf':{i : 1 for i in [1,3,5,10,11,12,13,14,15,16,17,18]}},
+	# sentence 1
+	{'tf-idf':{i : 1 for i in [1,2,3,10]}},
+	# sentence 2
+	{'tf-idf':{i : 1 for i in [2,4,5]}},
+	# sentence 3
+	{'tf-idf':{i : 1 for i in [2,5,6]}},
+	# sentence 4
+	{'tf-idf':{i : 1 for i in [1,2,5]}},
+	# sentence 5
+	{'tf-idf':{i : 1 for i in [3,4,5]}}
+]
+
+q = { i: 1 for i in [1] }
+
+feat = FeaturesScoring(D,q)
+class FeatureTest(unittest.TestCase):
+
+	# cosine matching
+	def testOne(self):
+		self.assertEquals(feat.find_match(D,q), [0,1,4])
+
+		D2 = { i: 1 for i in [6,11] }
+
+		self.assertEquals(feat.find_match(D,D2), [0,3])
+		self.assertEquals(feat.cosine_matching(q,D2,D), 1)
+
+		D2 = { i: 1 for i in [4] }
+		self.assertEquals(feat.find_match(D,D2), [2,5])
+		self.assertEquals(feat.cosine_matching(q,D2,D), 0)
+
+		D2 = { i: 1 for i in [1,2] }
+		self.assertEquals(feat.find_match(D,D2), [0,1,2,3,4])
+		self.assertEquals(feat.cosine_matching(q,D2,D), 3)
+
 		
 
 if __name__ == '__main__':
