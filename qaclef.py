@@ -22,23 +22,24 @@ import preprocessing
 import model_builder
 import scoring
 import operator
+from report import report
 from evaluation import evaluate
 from collections import defaultdict
 from tmert import execute_mert as mert_training
 
-parser = argparse.ArgumentParser(description="Run QA-CLEF-System")
-parser.add_argument('--preprocess',action="store_true")
-parser.add_argument('--train',action="store_true")
-parser.add_argument('--answeronly',action='store_true')
-parser.add_argument('--selftest',action='store_true')
-parser.add_argument('--data',nargs = '+',default=[2011],type=int)
-parser.add_argument('--test',nargs = '+',default=[2012],type=int)
-parser.add_argument('--forcedownload',action='store_true')
-parser.add_argument('--ngram', type=int, default=3)
-parser.add_argument('--threshold', type=float, default=0.5)
-args = parser.parse_args()
-
 def main():	
+	parser = argparse.ArgumentParser(description="Run QA-CLEF-System")
+	parser.add_argument('--preprocess',action="store_true")
+	parser.add_argument('--train',action="store_true")
+	parser.add_argument('--answeronly',action='store_true')
+	parser.add_argument('--selftest',action='store_true')
+	parser.add_argument('--data',nargs = '+',default=[2011],type=int)
+	parser.add_argument('--test',nargs = '+',default=[2012],type=int)
+	parser.add_argument('--forcedownload',action='store_true')
+	parser.add_argument('--ngram', type=int, default=3)
+	parser.add_argument('--threshold', type=float, default=0.5)
+	parser.add_argument('--report',action='store_true')
+	args = parser.parse_args()
 	process_args(args)
 
 	data = qacache.preprocessed_data(args.data,args.test)
@@ -59,7 +60,7 @@ def main():
 	test_model = model_builder.build_model(data[-len(args.test):]) if len(args.test) != 0 else []
 
 	# scoring
-	print >> sys.stderr, 'Unweighted Scoring...'
+	print >> sys.stderr, 'Unweighted Feature Scoring...'
 	training_model and scoring.score(training_model)
 	test_model and scoring.score(test_model)
 
@@ -72,16 +73,19 @@ def main():
 		print >> sys.stderr, 'Weight is found on cache/weight.txt'
 
 	# weighted_scoring
-	print >> sys.stderr, 'Weighted Scoring...'
-	final = scoring.weighted_scoring(args.selftest and training_model or test_model, weight)
+	print >> sys.stderr, 'Weighted Feature Scoring...'
+	final = scoring.weighted_scoring(training_model if args.selftest else test_model, weight)
 
 	# answer selection
-	select_answer(final)
+	select_answer(final,args.threshold)
 
 	# evaluation
 	result = evaluate(final)
 
 	qacache.write_json(final,'final.txt',indent=True)
+
+	if args.report:
+		report(final, args.test if not args.selftest else args.data,weight)
 
 	print "Result: %f" % result
 
@@ -117,13 +121,12 @@ def train(model):
 						correct = 1 if 'correct' in candidate and candidate['correct'] else 0
 						questions[_id].append((int(correct), feats))
 						f.write(_id + ' ||| ' + str(correct) + ' ||| ' + ' '.join([key + "=" + str(value) for (key, value) in feats.items()]) + '\n')
-
-		f.close()
+						
 		best_weight = mert_training(questions,feature_names)
 		qacache.store_weight(best_weight)
 		return best_weight
 
-def select_answer(data):
+def select_answer(data,threshold):
 	for model in data:
 		for test_set in model:
 			for question in test_set['q']:
@@ -138,7 +141,7 @@ def select_answer(data):
 						_index = i
 						break
 				totals = list(enumerate([candidate['total_score'] for candidate in question['answer']]))
-				up_threshold = [abs(_max - score) > args.threshold for (index, score) in totals if index != _index]
+				up_threshold = [abs(_max - score) > threshold for (index, score) in totals if index != _index]
 
 				question['output'] = _index if reduce(operator.and_,up_threshold) else None
 
@@ -146,30 +149,4 @@ def select_answer(data):
 if __name__ == '__main__':
 	main()
 	
-"""
-question = { 
-	'answer': [
-		{'total_score':1},
-		{'total_score':52},
-		{'total_score':50},
-		{'total_score':48},
-		{'total_score':50}
-	]
-}
-
-
-for i in range (0, len(question['answer'])):
-	if _max == question['answer'][i]['total_score']:
-		_index = i
-		break
-
-print _max, _index
-
-x = reduce(operator.and_, [(_max - score > 1) for (index, score) in list(enumerate([candidate['total_score'] for candidate in question['answer']])) if index != _index]) and _index or None
-print x
-
-"""
-
-
-
 

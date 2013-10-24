@@ -33,11 +33,13 @@ l# Compiled source #
 ._*
 .Spotlight-V100
 .Trashes
+\.nfs*
 ehthumbs.db
 Thumbs.db
 
 # Special Files #
 #################
 cache
+report
 input/*
 *.pyc

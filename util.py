@@ -34,7 +34,7 @@ def print_leaves(node,f=None):
 		else:
 			print node
 
-def write_line(f,string):
+def write_line(f,string=''):
 	f.write(str(string)+'\n')
 
 def traverse_test_set(action,test,list_method=False):
