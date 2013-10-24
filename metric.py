@@ -18,6 +18,7 @@ import math
 #	    http://www.phontron.com/paper/arthur13clef.pdf
 
 threshold = 0.1 # l
+LOG_BASE = 10
 
 ###
 # -- IDF 
@@ -26,13 +27,13 @@ threshold = 0.1 # l
 #                  1 + (number of sentence where term t occurs)
 # log is in base 10
 def idf(D,v):
-	return math.log(float(D) / (1 + v), 10)
+	return math.log(float(D) / (1 + v), LOG_BASE)
 
 # cosine similarity
 # q and dj is already in tf-idf form
 def sim(q,dj):
 	if len(q) == 0 or len(dj) == 0: return 0 
-	return dot_product(q,dj) / (norm_2(q) * norm_2(dj))
+	return float(dot_product(q,dj)) / (norm_2(q) * norm_2(dj))
 
 # v1 and v2 are dictionary of occurences
 def dot_product(v1,v2):
