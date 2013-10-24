@@ -51,6 +51,9 @@ def open_json(name):
 	else:
 		return None
 
-def write_json(data, name):
+def write_json(data, name, indent = False):
 	with open_cache(name, 'w') as f:
-		f.write(json.dumps(data))
+		if indent:
+			f.write(json.dumps(data, sort_keys=True, indent=4 * ' '))
+		else:
+			f.write(json.dumps(data))

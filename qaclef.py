@@ -81,6 +81,8 @@ def main():
 	# evaluation
 	result = evaluate(final)
 
+	qacache.write_json(final,'final.txt',indent=True)
+
 	print "Result: %f" % result
 
 def input_check(data, force):

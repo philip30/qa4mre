@@ -57,20 +57,22 @@ def score_candidate(doc, problem, candidates):
 	for candidate in candidates:
 		score = {}
 		score['cosine_matching'] = scorer.cosine_matching(problem['tf-idf'],candidate['tf-idf'],doc)
-		score['closest_sentence'] = scorer.closest_sentence(problem['tf-idf'],candidate['tf-idf'],doc)
-		score['greatest_matching'] = scorer.greatest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
-		score['closest_matching'] = scorer.closest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
-		score['greatest_cosine'] = scorer.greatest_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
-		score['average_cosine'] = scorer.average_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
-
-		# unmatch features
-		for feature, value in score.items():
-			if value is None:
-				score[feature] = 0.0
-				score['unmatch'] = 1.0
-			elif not ('unmatch' in score):
-				score['unmatch'] = 0.0
+		#score['closest_sentence'] = scorer.closest_sentence(problem['tf-idf'],candidate['tf-idf'],doc)
+		#score['greatest_matching'] = scorer.greatest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
+		#score['closest_matching'] = scorer.closest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
+		#score['greatest_cosine'] = scorer.greatest_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
+		#score['average_cosine'] = scorer.average_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
+		#det_unmatch(score)
+		
 		candidate['score'] = score
+
+def det_unmatch(score):
+	for feature, value in score.items():
+		if value is None:
+			score[feature] = 0.0
+			score['unmatch'] = 1.0
+		elif not ('unmatch' in score):
+			score['unmatch'] = 0.0
 
 def map_to_tf_idf(vectors, idf_map):
 	tf_idf_map = {}
