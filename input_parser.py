@@ -23,16 +23,16 @@ from util import build_name_txt as build_name
 tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 def sentence_splitter(d):	
-	ret = map (word_tokenize_and_filter,tokenizer.tokenize(d))
+	ret = map (word_tokenize_and_filter,d.split('\n'))
+	ret = filter(lambda x: len(x) > 0, ret)
 	return ret
 
 def word_tokenize_and_filter(d):
 	d = removeNonAscii(d)
-	#d = re.sub(r"\n",". ",d)
 	d = re.sub(r"\.{2,}",". ",d)
 	d = re.sub(r"--", " ",d)
-	d = re.sub(r" {2,}"," ",d)
 	d = re.sub(r"/", " ",d)
+	d = re.sub(r" {2,}"," ",d)
 	d = re.sub(r"\."," . ",d)
 	return " ".join(nltk.word_tokenize(d))
 

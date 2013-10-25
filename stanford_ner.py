@@ -50,7 +50,6 @@ class StanfordNER():
 						_input.append(candidate['value'])
 
 		_input = '\n'.join(_input)
-		
 		_out,_err = process.communicate(_input)
 
 		i=0
@@ -79,18 +78,19 @@ class StanfordNER():
 		_tag, _word, i = '','',0
 		while i < len(tokens):
 			word = tokens[i].split('/')
-			if word[1] != 'O':
-				if _tag != '' and _tag != word[1]:
-						value.append((_word, _tag))
-						_word, _tag = '', ''
-				_word += word[0]
-				_tag = word[1]
-			else:
-				if _tag != '':
-					value.append((_word,_tag))
-					_word,_tag = '', ''
-				value.append((word[0],word[1]))
-			i += 1
+			if len(word) > 0:
+				if word[1] != 'O':
+					if _tag != '' and _tag != word[1]:
+							value.append((_word, _tag))
+							_word, _tag = '', ''
+					_word += word[0]
+					_tag = word[1]
+				else:
+					if _tag != '':
+						value.append((_word,_tag))
+						_word,_tag = '', ''
+					value.append((word[0],word[1]))
+				i += 1
 		if len(_word) != 0:
 			value.append((_word,_tag))
 		return value

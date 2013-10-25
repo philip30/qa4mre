@@ -85,7 +85,7 @@ def transform_to_vector(_list):
 #     .....
 # }
 def build_idf_map(sentences):
-	sequence_of_words = {'__default__':0}
+	sequence_of_words = {'__default__': idf(D=len(sentences),v=0)}
 	for sentence in sentences:
 		for word in sentence['vectors'].keys():
 			if word in sequence_of_words:
