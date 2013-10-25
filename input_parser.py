@@ -22,15 +22,22 @@ from util import build_name_txt as build_name
 
 tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
-def sentence_splitter(d):
-	d = re.sub(r"\n",". ",d)
+def sentence_splitter(d):	
+	ret = map (word_tokenize_and_filter,tokenizer.tokenize(d))
+	return ret
+
+def word_tokenize_and_filter(d):
+	d = removeNonAscii(d)
+	#d = re.sub(r"\n",". ",d)
 	d = re.sub(r"\.{2,}",". ",d)
-	d = re.sub(r"^.","", d)
 	d = re.sub(r"--", " ",d)
 	d = re.sub(r" {2,}"," ",d)
 	d = re.sub(r"/", " ",d)
 	d = re.sub(r"\."," . ",d)
-	return map (lambda x : " ".join(nltk.word_tokenize(x)),tokenizer.tokenize(d))
+	return " ".join(nltk.word_tokenize(d))
+
+def removeNonAscii(s): 
+	return "".join(i for i in s if ord(i)<128)
 
 def parse(filename):
 	tree = etree.parse(build_name(directory, filename))
@@ -38,18 +45,18 @@ def parse(filename):
 
 	tests = []
 	for test in root.iter('reading-test'):
-		doc = sentence_splitter(test.find('doc').text.encode('utf8'))
+		doc = sentence_splitter(test.find('doc').text.encode('utf-8'))
 		
 		_questions = []
 		for q_index in range (1,len(test)):
 			question = test[q_index]
-			q_str = question.find('q_str').text.encode('utf8')
+			q_str = word_tokenize_and_filter(question.find('q_str').text.encode('utf-8'))
 
 			choices = []
 			for c_index in range (1, len(question)):
 				choice = question[c_index]
 				_choice = {}
-				_choice["value"] = choice.text.encode('utf8')
+				_choice["value"] = word_tokenize_and_filter(choice.text.encode('utf-8'))
 				if 'correct' in choice.attrib and choice.attrib['correct'].lower() == 'yes':
 					_choice["correct"] = True
 				choices.append(_choice)

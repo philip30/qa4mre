@@ -14,38 +14,68 @@
 
 from configuration import STANFORD_NER_TAGSET_PATH as tagset_path
 from configuration import STANFORD_NER_JAR_PATH as jar_path
-from configuration import STANFORD_NER_JVM_MEMORY as memory
 from util import traverse_test_set as traverse
 from util import traverse_test_set_with_assignment as traverse_assignment
 from util import traverse_test_set_root as traverse_root 
 
+
+from subprocess import Popen, PIPE
+
+import shlex
 import os
 import subprocess
 import signal
 import qacache
 import util
 import input_parser
+import nltk
 
-#static initialization
-merged_name = "1-merged.txt"
-ne_tagged_name = "2-netagged.txt"
-command = 'java ' + memory + ' -cp '+ jar_path +' edu.stanford.nlp.ie.crf.CRFClassifier -tokenizerFactory edu.stanford.nlp.process.WhitespaceTokenizer -tokenizerOptions "tokenizeNLs=true" '\
-	'-loadClassifier ' + tagset_path + ' --textFile cache/' + merged_name + ' > cache/' + ne_tagged_name
-	
+stanford_command = 'java -classpath "%s:lib" StanfordNERServer %s' % (jar_path,tagset_path)
+
 
 class StanfordNER():
 	def __init__(self, document_list):
-		f = self.prepare_to_write()
+
+		process = Popen(shlex.split(stanford_command),stdin=PIPE,stdout=PIPE,bufsize=1)
+
+		_input = []
 		for test_set_list in document_list:
 			for test_set in test_set_list:
-				self.write_test_set(f,test_set)
-		f.close()	
-		self.run_stanford_tagger()
-		document_list = self.read_tagged(qacache.open_cache(ne_tagged_name,'r'),document_list)
+				for sentence in test_set['doc']:
+					_input.append(sentence)
 
-	def read_ner(self,f):
+				for question in test_set['q']:
+					_input.append(question['q_str'])
+					for candidate in question['answer']:
+						_input.append(candidate['value'])
+
+		_input = '\n'.join(_input)
+		
+		_out,_err = process.communicate(_input)
+
+		i=0
+		result = _out.split('\n')
+		for test_set_list in document_list:
+			for test_set in test_set_list:
+				tagged_sentence = []
+				for sentence in test_set['doc']:
+					tagged_sentence.append(self.read_ner(result[i]))
+					i += 1
+
+				test_set['doc'] = tagged_sentence
+
+				for question in test_set['q']:
+					question['q_str'] = self.read_ner(result[i])
+					i+= 1
+
+					tagged_sentence = []
+					for candidate in question['answer']:
+						candidate['value'] = self.read_ner(result[i])
+						i+=1
+
+	def read_ner(self,line):
 		value = []
-		tokens = f.readline().strip().split(' ')
+		tokens = line.split(' ')
 		_tag, _word, i = '','',0
 		while i < len(tokens):
 			word = tokens[i].split('/')
@@ -65,13 +95,6 @@ class StanfordNER():
 			value.append((_word,_tag))
 		return value
 
-	def read_until_not_period(self,f):
-		while True:
-			line = f.readline()
-			if not line.startswith('.'):
-				return line
-		return ''
-
 	def read_tagged(self,f,document_list):
 		for document in document_list:
 			traverse_root(lambda x: self.read_ner(f),document,assignment=True)
@@ -79,12 +102,8 @@ class StanfordNER():
 	def run_stanford_tagger(self):
 		os.system(command)
 
-	def prepare_to_write(self):
-		return qacache.open_cache(merged_name,'w')
-
 	def write_test_set(self,f,test_set):
-		traverse_assignment(lambda x: x + '.' if not any(c in x.strip() for c in ['.','!','?']) else x,test_set)
-		traverse(lambda x: util.write_line(f,str(x)),test_set)
+		traverse(lambda x: util.write_line(f,str(' '.join(nltk.word_tokenize(x)))),test_set)
 
 
 if __name__ == '__main__':

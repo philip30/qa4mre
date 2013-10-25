@@ -16,7 +16,6 @@ STANFORD_NLP_PATH = '/usr/share/stanford-corenlp/'
 STANFORD_NER_PATH = '/usr/share/stanford-ner/'
 STANFORD_NER_TAGSET_PATH = STANFORD_NER_PATH + 'classifiers/english.conll.4class.distsim.crf.ser.gz'
 STANFORD_NER_JAR_PATH = STANFORD_NER_PATH + 'stanford-ner.jar'
-STANFORD_NER_JVM_MEMORY='-mx1g'
 
 # Data
 directory = "input"
