@@ -22,8 +22,10 @@ from input_parser import parse
 from util import traverse_all_test_sets as traverse_all
 from stop_word_list import stop_word_list as stop_word_list
 from nltk.stem.porter import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
 
 stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
 used_stop_word_list = stop_word_list - set([]) #exclusion list
 def preprocess(testdoc,tag_ner=True):
 	if tag_ner:
@@ -47,10 +49,11 @@ def preprocess(testdoc,tag_ner=True):
 	traverse_all(lambda x: ("",x[1]) if x[0] in used_stop_word_list else x,testdoc, assignment=True)
 
 	# stemming
-	traverse_all(lambda x : (stemmer.stem(x[0]),x[1]),testdoc, assignment=True)
+	traverse_all(lambda x : (lemmatizer.lemmatize(x[0]),x[1]),testdoc, assignment=True)
 
 	# purging
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
+	purge(testdoc)
 
 	write_result(testdoc, '5-stop-word-cleaning-stemming.txt')
 	return testdoc
@@ -134,6 +137,11 @@ def reference_ne(ne,coordinate_list,target_doc):
 	for i,j in coordinate_list:
 		if target_doc[i][j][1] == 'O':
 			target_doc[i][j] = ne
+
+def purge(testdocs):
+	for test_doc in testdocs:
+		for test_set in test_doc:
+			test_set['doc'] = filter (lambda x: len(x) != 0, test_set['doc'])
 
 ######### IO #####################################
 def write_result(testdoc, name):

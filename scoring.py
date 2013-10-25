@@ -57,12 +57,12 @@ def score_candidate(doc, problem, candidates):
 	for candidate in candidates:
 		score = {}
 		score['cosine_matching'] = scorer.cosine_matching(problem['tf-idf'],candidate['tf-idf'],doc)
-		#score['closest_sentence'] = scorer.closest_sentence(problem['tf-idf'],candidate['tf-idf'],doc)
-		#score['greatest_matching'] = scorer.greatest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
-		#score['closest_matching'] = scorer.closest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
-		#score['greatest_cosine'] = scorer.greatest_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
-		#score['average_cosine'] = scorer.average_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
-		#det_unmatch(score)
+		score['closest_sentence'] = scorer.closest_sentence(problem['tf-idf'],candidate['tf-idf'],doc)
+		score['greatest_matching'] = scorer.greatest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
+		score['closest_matching'] = scorer.closest_matching(problem['tf-idf'],candidate['tf-idf'],doc)
+		score['greatest_cosine'] = scorer.greatest_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
+		score['average_cosine'] = scorer.average_cosine(problem['tf-idf'],candidate['tf-idf'],doc)
+		det_unmatch(score)
 		
 		candidate['score'] = score
 
