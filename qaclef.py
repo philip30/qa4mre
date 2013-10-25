@@ -57,7 +57,7 @@ def main():
 	# build-model
 	print >> sys.stderr, 'Building model...'
 	training_model = model_builder.build_model(data[:len(args.data)])
-	test_model = model_builder.build_model(data[-len(args.test):]) if len(args.test) != 0 else []
+	test_model = model_builder.build_model(data[-len(args.test):]) if len(args.test) != 0 and not args.selftest else []
 
 	# scoring
 	print >> sys.stderr, 'Unweighted Feature Scoring...'

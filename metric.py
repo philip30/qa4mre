@@ -32,8 +32,9 @@ def idf(D,v):
 # cosine similarity
 # q and dj is already in tf-idf form
 def sim(q,dj):
-	if len(q) == 0 or len(dj) == 0: return 0 
-	return float(dot_product(q,dj)) / (norm_2(q) * norm_2(dj))
+	len_q = norm_2(q)
+	len_dj = norm_2(dj)
+	return float(dot_product(q,dj)) / (len_q * len_dj) if len_q != 0 and len_dj != 0 else 0
 
 # v1 and v2 are dictionary of occurences
 def dot_product(v1,v2):

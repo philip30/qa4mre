@@ -33,7 +33,7 @@ def _build_model(test_set):
 	util.traverse_test_set_with_assignment(lambda x: build_n_gram(x,n_gram),test_set,list_method=True)
 	util.traverse_test_set_with_assignment(transform_to_vector,test_set,list_method=True)
 	idf_map = build_idf_map(test_set['doc'])
-	test_set['idf_map'] = idf_map
+	test_set['idf_map'] = idf_map	
 
 # Build_n_gram
 # [(w1,t1),(w2,t2),(w3,t3),...,(wn,tn)] ->
@@ -64,6 +64,12 @@ def build_n_gram(sentence,n_gram):
 # }
 def transform_to_vector(_list):
 	vectors = dict(Counter([word for (word,tag) in _list]))
+
+	for k, v in vectors.items():
+		if v == 0:
+			print vectors
+			sys.exit(1)
+
 	return {'vectors': vectors, 'sentence': _list}
 
 # Build IDF Map
@@ -85,7 +91,7 @@ def transform_to_vector(_list):
 #     .....
 # }
 def build_idf_map(sentences):
-	sequence_of_words = {'__default__': idf(D=len(sentences),v=0)}
+	sequence_of_words = {'__default__' : 0}
 	for sentence in sentences:
 		for word in sentence['vectors'].keys():
 			if word in sequence_of_words:
@@ -94,4 +100,8 @@ def build_idf_map(sentences):
 				sequence_of_words[word] = 1
 
 	sequence_of_words = {k: idf(D=len(sentences),v=v) for k, v in sequence_of_words.iteritems()}
+	
+	if len(sentences) == 0:
+		print >> sys.stdedd, "WARNING >> Only 1 sentence in document is detected."
+
 	return sequence_of_words
