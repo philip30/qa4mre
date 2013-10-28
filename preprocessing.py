@@ -31,19 +31,22 @@ def preprocess(testdoc,tag_ner=True):
 	if tag_ner:
 		StanfordNER(testdoc)
 
+	write_result(testdoc,'1-named-entity-recognition.txt')
+
 	# lowercasing
 	traverse_all(lambda x : (x[0].lower(),x[1]),testdoc,assignment=True)
 
 	# token-altering
 	traverse_all(lambda x : (token_altering(x[0]),x[1]),testdoc,assignment=True)
 
+	# co-Reference Resolution
+	write_result(testdoc, '2-token-altering-lowercasing.txt')
+	coreference_resolution(testdoc)
+	traverse_all(split_ne,testdoc, assignment=True,list_method=True)
+	write_result(testdoc, '3-correference-resolution.txt')
+
 	# only alpha numeric is allowed
 	traverse_all(lambda x : (filter(lambda c: c.isalpha(), x[0]),x[1]), testdoc,assignment=True)
-
-	# co-Reference Resolution
-	write_result(testdoc, '3-alphanum-lowercasing.txt')
-	coreference_resolution(testdoc)
-	write_result(testdoc, '4-correference-resolution.txt')
 
 	# stop word deletion
 	traverse_all(lambda x: ("",x[1]) if x[0] in used_stop_word_list else x,testdoc, assignment=True)
@@ -53,9 +56,9 @@ def preprocess(testdoc,tag_ner=True):
 
 	# purging
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
-	purge(testdoc)
+	traverse_all(lambda doc: filter (lambda x: len(x) != 0, doc), testdoc, assignment=True,list_method=True)
 
-	write_result(testdoc, '5-stop-word-cleaning-stemming.txt')
+	write_result(testdoc, '4-stop-word-cleaning-stemming.txt')
 	return testdoc
 
 ######### CO-REFERENCE RESOLUTION ################
@@ -138,10 +141,14 @@ def reference_ne(ne,coordinate_list,target_doc):
 		if target_doc[i][j][1] == 'O':
 			target_doc[i][j] = ne
 
-def purge(testdocs):
-	for test_doc in testdocs:
-		for test_set in test_doc:
-			test_set['doc'] = filter (lambda x: len(x) != 0, test_set['doc'])
+def split_ne(sentence):
+	_list = []
+	for word in sentence:
+		_split = word[0].split('_')
+		for _split_word in _split:
+			_list.append((_split_word,word[1]))
+	return _list
+
 
 ######### IO #####################################
 def write_result(testdoc, name):
@@ -157,12 +164,13 @@ token_map = {
 	"'re" : "are",
 	"'d" : "would",
 	"'ve" : "have",
+	'll' : "will",
 	"--lrb--":"(",
 	"--rrb--":")"
 }
 
 def token_altering(token):
-	return token in token_map and token_map[token] or token
+	return token_map[token] if token in token_map else token
 
 if __name__ == "__main__":
 	data = [parse("CLEF_2011_GS"), parse("CLEF_2012_GS")]

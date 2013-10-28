@@ -81,8 +81,9 @@ class StanfordNER():
 			if len(word) > 0:
 				if word[1] != 'O':
 					if _tag != '' and _tag != word[1]:
-							value.append((_word, _tag))
-							_word, _tag = '', ''
+						value.append((_word, _tag))
+						_word, _tag = '', ''
+					if _word != '': _word += '_'
 					_word += word[0]
 					_tag = word[1]
 				else:
