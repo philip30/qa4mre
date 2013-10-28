@@ -16,14 +16,13 @@ import urllib2
 import os
 import sys
 
-from configuration import directory as directory
 from configuration import input as input
 
 def download(name, url, force):
 	try:
-		if not os.path.exists(directory):
-			os.makedirs(directory)
-		file_path = directory + "/" + name + ".txt"
+		if not os.path.exists('input'):
+			os.makedirs('input')
+		file_path =  "input/" + name + ".txt"
 		if force or not os.path.exists(file_path):
 			print "Downloading ", name,
 			response = urllib2.urlopen(url)

@@ -16,16 +16,12 @@ import sys
 import nltk
 import re
 import xml.etree.ElementTree as etree
-from configuration import directory as directory
+from stanford_parser import sentence_split
 from configuration import input as inp
 from util import build_name_txt as build_name
 
 tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
-def sentence_splitter(d):	
-	ret = map (word_tokenize_and_filter,d.split('\n'))
-	ret = filter(lambda x: len(x) > 0, ret)
-	return ret
 
 def word_tokenize_and_filter(d):
 	d = removeNonAscii(d)
@@ -40,12 +36,12 @@ def removeNonAscii(s):
 	return "".join(i for i in s if ord(i)<128)
 
 def parse(filename):
-	tree = etree.parse(build_name(directory, filename))
+	tree = etree.parse(build_name('input', filename))
 	root = tree.getroot()
 
 	tests = []
 	for test in root.iter('reading-test'):
-		doc = sentence_splitter(test.find('doc').text.encode('utf-8'))
+		doc = sentence_split(word_tokenize_and_filter(test.find('doc').text.encode('utf-8')))
 		
 		_questions = []
 		for q_index in range (1,len(test)):

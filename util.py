@@ -13,7 +13,6 @@
 # Lesser General Public License for more details.
 
 import unittest
-from configuration import directory as directory
 
 def build_name_txt(directory, url):
 	return directory + "/" + url + ".txt"
