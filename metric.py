@@ -90,7 +90,7 @@ class FeaturesScoring:
 	# this feature is not in the paper
 	def average_cosine(self,q,ak,D):
 		p = merge(q,ak)
-		return float(sum(sim(p,dj['tf-idf']) for dj in D)/len(D))
+		return float(sum([sim(p,dj['tf-idf']) for dj in D])/len(D))
 
 	def find_match(self,doc, d):
 		match = []

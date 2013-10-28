@@ -52,7 +52,7 @@ def preprocess(testdoc,tag_ner=True):
 	traverse_all(lambda x: ("",x[1]) if x[0] in used_stop_word_list else x,testdoc, assignment=True)
 
 	# stemming
-	traverse_all(lambda x : (stemmer.stem(x[0]),x[1]),testdoc, assignment=True)
+	traverse_all(lambda x : (lemmatizer.lemmatize(x[0]),x[1]),testdoc, assignment=True)
 
 	# purging
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
