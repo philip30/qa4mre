@@ -20,7 +20,7 @@ import edu.stanford.nlp.ie.AbstractSequenceClassifier;
 import edu.stanford.nlp.ie.crf.CRFClassifier;
 
 // HOW TO COMPILE:
-// javac -classpath [STANFORD_NER_PATH] StanfordNERServer.java
+// javac -classpath [STANFORD_NER_JAR_PATH] StanfordNERServer.java
 //
 
 // EXECUTE: [from upper directory]

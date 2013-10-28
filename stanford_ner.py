@@ -17,14 +17,10 @@ from configuration import STANFORD_NER_JAR_PATH as jar_path
 from util import traverse_test_set as traverse
 from util import traverse_test_set_with_assignment as traverse_assignment
 from util import traverse_test_set_root as traverse_root 
-
-
 from subprocess import Popen, PIPE
 
 import shlex
 import os
-import subprocess
-import signal
 import qacache
 import util
 import input_parser
@@ -33,7 +29,7 @@ import nltk
 stanford_command = 'java -classpath "%s:lib" StanfordNERServer %s' % (jar_path,tagset_path)
 
 
-class StanfordNER():
+class StanfordNER:
 	def __init__(self, document_list):
 
 		process = Popen(shlex.split(stanford_command),stdin=PIPE,stdout=PIPE,bufsize=1)
