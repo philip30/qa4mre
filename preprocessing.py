@@ -52,11 +52,11 @@ def preprocess(testdoc,tag_ner=True):
 	traverse_all(lambda x: ("",x[1]) if x[0] in used_stop_word_list else x,testdoc, assignment=True)
 
 	# stemming
-	traverse_all(lambda x : (lemmatizer.lemmatize(x[0]),x[1]),testdoc, assignment=True)
+	traverse_all(lambda x : (stemmer.stem(x[0]),x[1]),testdoc, assignment=True)
 
 	# purging
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
-	traverse_all(lambda doc: filter (lambda x: len(x) != 0, doc), testdoc, assignment=True,list_method=True)
+	purge(testdoc)
 
 	write_result(testdoc, '4-stop-word-cleaning-stemming.txt')
 	return testdoc
@@ -149,6 +149,11 @@ def split_ne(sentence):
 			_list.append((_split_word,word[1]))
 	return _list
 
+######### PURGE ##################################
+def purge(testdocs):
+	for test_doc in testdocs:
+		for test_set in test_doc:
+			test_set['doc'] = filter (lambda x: len(x) != 0, test_set['doc'])
 
 ######### IO #####################################
 def write_result(testdoc, name):

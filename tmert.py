@@ -108,7 +108,7 @@ def execute_mert(questions, feat_names, init_weights={}, threshold=1.0, random_r
 
         print >> sys.stderr, ""
         print >> sys.stderr, "BEST: C@1=%r, threshold=%r, weights=%r" % (best_score, threshold, best_weights)
-    return best_weights
+    return {feat: (best_weights[feat] if feat in best_weights else 0) for feat in feat_names.keys()}
 
 # Parameters
 margin = 1
