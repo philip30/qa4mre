@@ -17,7 +17,7 @@ import sys
 from util import write_line as write
 
 INDENT = 2
-CHOICE = ['a','b','c','d','e','f','g']
+CHOICE = ['A','B','C','D','E','F','G']
 
 def report(test_data, information,weight):
 	# prepare to write
@@ -41,9 +41,9 @@ def _report(f,test_set,weight):
 	for i in range(0,len(questions)):
 		deep_write(f,2, str(i+1) + '. ' + viewable(questions[i]['q_str']))
 		candidates = questions[i]['answer']
-		deep_write(f,2, "System's Answer: " + questions[i]['evaluation'])
+		deep_write(f,2, "System's Answer: " + (str(CHOICE[questions[i]['output']]) if questions[i]['output'] is not None else '-') + " ["+questions[i]['evaluation']+"]")
 		for j in range(0,len(candidates)):
-			deep_write(f,3,CHOICE[j] + '. ' + viewable(candidates[j]['value']))
+			deep_write(f,3, is_correct(CHOICE[j], candidates[j]) + '. ' + viewable(candidates[j]['value']))
 			features = candidates[j]['score']
 			weighted = candidates[j]['weighted_score']
 			for feature, feat_value in features.items():
@@ -52,6 +52,11 @@ def _report(f,test_set,weight):
 			deep_write(f,4,"Total Score: " + str(candidates[j]['total_score']))
 		write(f)
 
+def is_correct(letter, candidate):
+	if "correct" in candidate and candidate["correct"]:
+		return "[" + letter + "]"
+	else:
+		return letter
 
 def viewable(sentence):
 	return ' '.join([word for (word, tag) in sentence['sentence'] if not '-' in tag])
