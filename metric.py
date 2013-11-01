@@ -17,7 +17,7 @@ import math
 # NOTE: All of the metrics are the implementations of the following paper:
 #	    http://www.phontron.com/paper/arthur13clef.pdf
 
-threshold = 0.1 # l
+threshold = 0.05 # l
 LOG_BASE = 10
 
 ###
