@@ -21,6 +21,7 @@ from subprocess import Popen, PIPE
 
 import shlex
 import os
+import sys
 import qacache
 import util
 import input_parser
@@ -70,11 +71,11 @@ class StanfordNER:
 
 	def read_ner(self,line):
 		value = []
-		tokens = line.split(' ')
+		tokens = line.strip().split(' ')
 		_tag, _word, i = '','',0
 		while i < len(tokens):
 			word = tokens[i].split('/')
-			if len(word) > 0:
+			if len(word) > 1:
 				if word[1] != 'O':
 					if _tag != '' and _tag != word[1]:
 						value.append((_word, _tag))
