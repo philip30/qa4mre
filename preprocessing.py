@@ -28,6 +28,9 @@ stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 used_stop_word_list = stop_word_list - set([]) #exclusion list
 def preprocess(testdoc,tag_ner=True):
+	write_result(testdoc,'not-processed.txt')
+	split_capital_word(testdoc)
+	write_result(testdoc,'0-split-capital-word.txt')
 	if tag_ner:
 		StanfordNER(testdoc)
 
@@ -60,6 +63,35 @@ def preprocess(testdoc,tag_ner=True):
 
 	write_result(testdoc, '4-stop-word-cleaning-stemming.txt')
 	return testdoc
+	
+######### SPLIT CAPITAL WORD #####################
+def split_capital_word(testsets):
+	for test_doc in testsets:
+		for test_set in test_doc:
+			_split_capital_word(test_set)
+
+
+# activistI 
+#
+#
+def _split_capital_word(test_set):
+	doc = []
+
+	flag = False
+	for sentence in test_set['doc']:
+		s = ""
+		for c in sentence:
+			if flag and c.isupper():
+				s += " "
+				flag = False
+			elif c == ' ':
+				flag = False
+			elif c.islower():
+				flag = True
+			s += c
+		doc.append(s)
+	test_set['doc'] = doc
+	return test_set['doc']
 
 ######### CO-REFERENCE RESOLUTION ################
 pronoun = set(['i','my','mine','she','he','it', 'his', 'her', 'they', 'them', 'their', 'him', 'himself', 'herself', 'myself', 'themselves', 'itself'])
