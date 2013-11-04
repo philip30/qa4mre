@@ -62,7 +62,7 @@ def preprocess(testdoc,tag_ner=True):
 	traverse_all(lambda x: [""] + x[1:] if x[0] in used_stop_word_list else x,testdoc, assignment=True)
 
 	# stemming
-	traverse_all(lambda x : [lemmatizer.lemmatize(x[0])] + x[1:],testdoc, assignment=True)
+	traverse_all(lambda x : [lemmatize(x[0],x[1],x[2])] + x[1:],testdoc, assignment=True)
 
 	# purging
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
@@ -80,7 +80,25 @@ def pos_tag(sentence):
 	for w,tag in zip(sentence,_tagged):
 		w.append(tag[1])
 	return sentence 
-	
+
+######### LEMMATIZATION
+def lemmatize(word, ner_tag, pos_tag):
+	tag = get_word_net_tag(pos_tag)
+	return lemmatizer.lemmatize(word,tag) if ner_tag == 'O' and word != '' and tag != '' else word
+
+# nltk.googlecode.com/svn/trunk/doc/api/nltk.corpus.reader.wordnet-module.html
+def get_word_net_tag(pos_tag):
+	if pos_tag[0] == 'J':
+		return 'a'
+	elif pos_tag[0] == 'N':
+		return 'n'
+	elif pos_tag[0] == 'V':
+		return 'v'
+	elif pos_tag[0] == 'R':
+		return 'r'
+	else:
+		return ''
+
 ######### SPLIT CAPITAL WORD #####################
 def split_capital_word(testsets):
 	for test_doc in testsets:
