@@ -15,6 +15,7 @@
 import nltk
 import util
 import re
+import sys
 import simplejson as json
 import qacache as cache
 from stanford_ner import StanfordNER
@@ -35,6 +36,12 @@ def preprocess(testdoc,tag_ner=True):
 		StanfordNER(testdoc)
 
 	write_result(testdoc,'1-named-entity-recognition.txt')
+	
+	# pos tagging
+	print >> sys.stderr, "Begin POS-TAGGING",
+	traverse_all(pos_tag, testdoc, assignment=True,list_method=True)
+	write_result(testdoc, '1,5-pos-tagging.txt')
+	print >> sys.stderr, "DONE"
 
 	# lowercasing
 	traverse_all(lambda x : (x[0].lower(),x[1]),testdoc,assignment=True)
@@ -63,6 +70,16 @@ def preprocess(testdoc,tag_ner=True):
 
 	write_result(testdoc, '4-stop-word-cleaning-stemming.txt')
 	return testdoc
+
+######### POS TAG ###############################
+tagger = nltk.data.load(nltk.tag._POS_TAGGER)
+def pos_tag(sentence):
+	_list = [w for (w,tag) in sentence]
+	_tagged = tagger.tag(_list)
+	
+	for w,tag in zip(sentence,_tagged):
+		w.append(tag[1])
+	return sentence 
 	
 ######### SPLIT CAPITAL WORD #####################
 def split_capital_word(testsets):
@@ -70,10 +87,6 @@ def split_capital_word(testsets):
 		for test_set in test_doc:
 			_split_capital_word(test_set)
 
-
-# activistI 
-#
-#
 def _split_capital_word(test_set):
 	doc = []
 

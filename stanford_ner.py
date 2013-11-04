@@ -78,19 +78,19 @@ class StanfordNER:
 			if len(word) > 1:
 				if word[1] != 'O':
 					if _tag != '' and _tag != word[1]:
-						value.append((_word, _tag))
+						value.append([_word, _tag])
 						_word, _tag = '', ''
 					if _word != '': _word += '_'
 					_word += word[0]
 					_tag = word[1]
 				else:
 					if _tag != '':
-						value.append((_word,_tag))
+						value.append([_word,_tag])
 						_word,_tag = '', ''
-					value.append((word[0],word[1]))
+					value.append([word[0],word[1]])
 				i += 1
 		if len(_word) != 0:
-			value.append((_word,_tag))
+			value.append([_word,_tag])
 		return value
 
 	def read_tagged(self,f,document_list):
