@@ -31,18 +31,11 @@ def stored_weight():
 def store_weight(data):
 	write_json(data,'weight.txt')
 
-def store_preprocessed_data(data,train, test):
-	write_json(data,'preprocessed_data.txt')
-	write_json({'train': train, 'test':test}, 'preprocessed_data.info')
+def store_preprocessed_data(edition, data):
+	write_json(data,str(edition)+'-preprocessed.txt')
 
-def preprocessed_data(train,test):
-	try:
-		info = open_json('preprocessed_data.info')
-		if len(train) == len(info['train']) and len(test) == len(info['test']) and all( i in train for i in info['train'] ) and all ( i in test for i in info['test'] ):
-			return open_json('preprocessed_data.txt')
-	except Exception:
-		print >> sys.stderr, 'No preprocessed data is found, executing preprocessing.'
-	return None
+def find_data(edition):
+	return open_json(str(edition)+'-preprocessed.txt')
 	
 def open_json(name):
 	if os.path.exists('cache/' + name):

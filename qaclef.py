@@ -36,23 +36,33 @@ def main():
 	parser.add_argument('--data',nargs = '+',default=[2011],type=int)
 	parser.add_argument('--test',nargs = '+',default=[2012],type=int)
 	parser.add_argument('--forcedownload',action='store_true')
+	parser.add_argument('--preprocessonly',action='store_true')
 	parser.add_argument('--ngram', type=int, default=3)
 	parser.add_argument('--threshold', type=float, default=0.5)
 	parser.add_argument('--report',action='store_true')
 	args = parser.parse_args()
 	process_args(args)
 
-	data = qacache.preprocessed_data(args.data,args.test)
-	# parsing and preprocessing
-	if args.preprocess or data is None:
-		# parsing
-		print >> sys.stderr, 'Preprocessing data...'
-		input_check(args.data+args.test, args.forcedownload)
-		data = input_parse(args.data + args.test)
-		data = preprocessing.preprocess(data)
-		qacache.store_preprocessed_data(data,args.data,args.test)
-	else:
-		print >> sys.stderr, 'Preprocessed data is found on cache/preprocessed_data.txt'
+	data = []
+	for edition in args.data + args.test:
+		_data = qacache.find_data(edition)
+
+		if args.preprocess or _data is None:
+			input_check([edition],args.forcedownload)
+
+			_data = input_parse([edition])
+
+			print >> sys.stderr, 'preprocessing ' + str(edition) + '-data'
+			_data = preprocessing.preprocess(_data)
+
+			qacache.store_preprocessed_data(edition,_data[0])
+		else:
+			print >> sys.stderr, str(edition) + '-data is found on cache/' + str(edition) + '-prerocessed.txt'
+		data.append(_data)
+
+	if args.preprocessonly:
+		print >> sys.stderr, 'Preprocess-only task is done.'
+		sys.exit(0)
 
 	# build-model
 	print >> sys.stderr, 'Building model...'
