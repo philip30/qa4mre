@@ -44,7 +44,7 @@ def build_n_gram(sentence,n_gram):
 	try:
 		for _n_gram in range(2,n_gram+1):
 			for i in range(0,len(sentence)-_n_gram+1):
-				word = '_'.join([word for (word, tag) in sentence[i:i+_n_gram]])
+				word = '_'.join([tagged_word[0] for tagged_word in sentence[i:i+_n_gram]])
 				temp_list.append(tuple((word, str(_n_gram) + '-GRAM')))
 	except Exception:
 		print sentence
@@ -63,7 +63,7 @@ def build_n_gram(sentence,n_gram):
 #   sentence = [(w1,t1),(w2,t2),(w3,t3),...,(wn,tn)]
 # }
 def transform_to_vector(_list):
-	vectors = dict(Counter([word for (word,tag) in _list]))
+	vectors = dict(Counter([tagged_word[0] for tagged_word in _list]))
 
 	for k, v in vectors.items():
 		if v == 0:

@@ -1,7 +1,7 @@
 NAIST-QACLEF
 ----------------------------------------------------------------------------
-Author			: Philip Arthur
-Release Year	: 2013
+Author         : Philip Arthur
+Release Year   : 2013
 
 This software is the technical implementation of the following paper:
 http://www.phontron.com/paper/arthur13clef.pdf
@@ -24,6 +24,21 @@ This library is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 Lesser General Public License for more details.
+
+
+Release LOG
+---------------------------------------------------------------------------
+v1.1.0
+  - Add POS TAG
+  - Add Word Splitter 
+  - Add Matrix view to Report
+  - Change from Tupple based to List based
+  - Change Porter Stemmer to Word Net Lemmatizer 
+  - Save Preprocessed Data separately
+  - Readjust l from 1.0 to 0.5
+
+v1.0.0
+- Initial Release
 
 Installation:
 ----------------------------------------------------------------------------
@@ -50,8 +65,11 @@ Installation:
   http://nlp.stanford.edu/software/CRF-NER.shtml,
 
   EXTRACT and PUT the name of its path in configuration.py. 
-  The default configuration is '/usr/share/stanford-ner/stanford-ner.jar' --> change it according to your machine.
-  The used tagset is english.conll.4class.distsim.crf.ser.gz [it bounds with correference resolution method in preprocessing.py]
+  The default configuration is '/usr/share/stanford-ner/stanford-ner.jar'
+  Please change it according to your machine.
+
+  The used tagset is english.conll.4class.distsim.crf.ser.gz 
+  [it bounds with correference resolution method in preprocessing.py]
 
 - Stanford Parser
   Stanford Parser is used as part of preprocessing to split the input sentence.
@@ -69,7 +87,8 @@ Technical Usage Questions
 	- By executing 'python qaclef.py --selftest --data 2011'
 
 3. I want to work with multiple data and test on them, how can I?
-	- By executing 'python qaclef.py --selftest --data 2011 2012 2013' [example when working with 2011, 2012, 2013]
+	- By executing 'python qaclef.py --selftest --data 2011 2012 2013' 
+  *example when working with 2011, 2012, 2013*
 
 4. I want to train the system with 2011 and test it on 2012, how can I?
 	- By executing 'python qaclef.py --data 2011 --test 2012 --train' 
@@ -81,24 +100,30 @@ Some Technical Details
 -------------------------------------------------------------------------------
 1. This software runs good in at least 4GB memory.
 
-2. The software basically stores its output on file system. You can find the detail of the output in 'cache' folder.
+2. The software basically stores its output on file system. 
+   You can find the detail of the output in 'cache' folder.
 
-3. The software is equipped with 'by-passing' feature that will by pass some process if it founds the saved output in 'cache' folder (according to its process).
-	- Preprocess -> will look on 'preprocessed_data.txt' 
-		.) It will take the data on preprocessed_data.txt if the train and test data are exactly the same with saved output.
-		.) The software will look the information on preprocessed_data.info
+3. The software is equipped with 'by-passing' feature that will by pass some process,
+   if it founds the saved output in 'cache' folder (according to its process).
+	
+  - Preprocess -> will look on '[edition]-preprocessed.txt' 
+		.) It will take the particular edition data on corresponding file.
 		.) To force preprocessing add '--preprocess' flag
+    .) Run software with '--preprocessonly' to do preprocessing only.
 
 	- TMERT Training -> will look on 'weight.txt'
 		.) To force training add '--train' flag
 
 Cache
 -------------------------------------------------------------------------------
-As it is mentioned above, the software will write its process in file system. However not all of them are used to by pass processes.
+As it is mentioned above, the software will write its process in file system. 
+However not all of them are used to by pass processes.
+
 Some of them are intended for debugging and analyzing. They are:
  - 1 - 5 [preprocessing-details] -> for preprocessing
  - final.txt -> final test model (written in json)
- - qa-mert_input.txt -> generated input for tmert.py. If you wish to run the tmert seperately, this is the generated input for latest run
+ - qa-mert_input.txt -> generated input for tmert.py. 
+   If you wish to run tmert seperately, this is the generated train data input for latest run
 
 Report
 -------------------------------------------------------------------------------

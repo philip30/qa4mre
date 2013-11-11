@@ -15,6 +15,7 @@
 import nltk
 import util
 import re
+import sys
 import simplejson as json
 import qacache as cache
 from stanford_ner import StanfordNER
@@ -28,16 +29,25 @@ stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 used_stop_word_list = stop_word_list - set([]) #exclusion list
 def preprocess(testdoc,tag_ner=True):
+	write_result(testdoc,'not-processed.txt')
+	split_capital_word(testdoc)
+	write_result(testdoc,'0-split-capital-word.txt')
 	if tag_ner:
 		StanfordNER(testdoc)
 
 	write_result(testdoc,'1-named-entity-recognition.txt')
+	
+	# pos tagging
+	print >> sys.stderr, "Begin POS-TAGGING",
+	traverse_all(pos_tag, testdoc, assignment=True,list_method=True)
+	write_result(testdoc, '1,5-pos-tagging.txt')
+	print >> sys.stderr, "DONE"
 
 	# lowercasing
-	traverse_all(lambda x : (x[0].lower(),x[1]),testdoc,assignment=True)
+	traverse_all(lambda x : [x[0].lower()] + x[1:],testdoc,assignment=True)
 
 	# token-altering
-	traverse_all(lambda x : (token_altering(x[0]),x[1]),testdoc,assignment=True)
+	traverse_all(lambda x : [token_altering(x[0])] + x[1:],testdoc,assignment=True)
 
 	# co-Reference Resolution
 	write_result(testdoc, '2-token-altering-lowercasing.txt')
@@ -46,13 +56,13 @@ def preprocess(testdoc,tag_ner=True):
 	write_result(testdoc, '3-correference-resolution.txt')
 
 	# only alpha numeric is allowed
-	traverse_all(lambda x : (filter(lambda c: c.isalpha(), x[0]),x[1]), testdoc,assignment=True)
+	traverse_all(lambda x : [filter(lambda c: c.isalpha(), x[0])] + x[1:], testdoc,assignment=True)
 
 	# stop word deletion
-	traverse_all(lambda x: ("",x[1]) if x[0] in used_stop_word_list else x,testdoc, assignment=True)
+	traverse_all(lambda x: [""] + x[1:] if x[0] in used_stop_word_list else x,testdoc, assignment=True)
 
 	# stemming
-	traverse_all(lambda x : (lemmatizer.lemmatize(x[0]),x[1]),testdoc, assignment=True)
+	traverse_all(lambda x : [lemmatize(x[0],x[1],x[2])] + x[1:],testdoc, assignment=True)
 
 	# purging
 	traverse_all(lambda x: filter(lambda y: len(y[0])!=0, x) ,testdoc, assignment=True,list_method=True)
@@ -60,6 +70,59 @@ def preprocess(testdoc,tag_ner=True):
 
 	write_result(testdoc, '4-stop-word-cleaning-stemming.txt')
 	return testdoc
+
+######### POS TAG ###############################
+tagger = nltk.data.load(nltk.tag._POS_TAGGER)
+def pos_tag(sentence):
+	_list = [w for (w,tag) in sentence]
+	_tagged = tagger.tag(_list)
+	
+	for w,tag in zip(sentence,_tagged):
+		w.append(tag[1])
+	return sentence 
+
+######### LEMMATIZATION
+def lemmatize(word, ner_tag, pos_tag):
+	tag = get_word_net_tag(pos_tag)
+	return lemmatizer.lemmatize(word,tag) if ner_tag == 'O' and word != '' and tag != '' else word
+
+# nltk.googlecode.com/svn/trunk/doc/api/nltk.corpus.reader.wordnet-module.html
+def get_word_net_tag(pos_tag):
+	if pos_tag[0] == 'J':
+		return 'a'
+	elif pos_tag[0] == 'N':
+		return 'n'
+	elif pos_tag[0] == 'V':
+		return 'v'
+	elif pos_tag[0] == 'R':
+		return 'r'
+	else:
+		return ''
+
+######### SPLIT CAPITAL WORD #####################
+def split_capital_word(testsets):
+	for test_doc in testsets:
+		for test_set in test_doc:
+			_split_capital_word(test_set)
+
+def _split_capital_word(test_set):
+	doc = []
+
+	flag = False
+	for sentence in test_set['doc']:
+		s = ""
+		for c in sentence:
+			if flag and c.isupper():
+				s += " "
+				flag = False
+			elif c == ' ':
+				flag = False
+			elif c.islower():
+				flag = True
+			s += c
+		doc.append(s)
+	test_set['doc'] = doc
+	return test_set['doc']
 
 ######### CO-REFERENCE RESOLUTION ################
 pronoun = set(['i','my','mine','she','he','it', 'his', 'her', 'they', 'them', 'their', 'him', 'himself', 'herself', 'myself', 'themselves', 'itself'])
@@ -98,12 +161,12 @@ def _coreference_resolution(test_doc):
 	speaker = None
 	for i in range(0,len(test_doc)): # test_doc[i] ==> sentence
 		for j in range(0,len(test_doc[i])): # test_doc[i][j] ==> (WORD, NE_TAG)
-			word, tag = test_doc[i][j]
+			word, tag = test_doc[i][j][0], test_doc[i][j][1]
 			if word in pronoun:
 				expected_ne = expected_map[word]
 				if 'SPEAKER' in expected_ne:
 					if speaker != None:
-						test_doc[i][j] = (speaker, 'PERSON')
+						test_doc[i][j] = [speaker, 'PERSON'] + test_doc[i][j][2:]
 					else:
 						map (lambda x: unreferenced_pronoun[x].append((i,j)), expected_ne)
 				else:
@@ -116,7 +179,7 @@ def _coreference_resolution(test_doc):
 				is_speaker = speaker == None and tag == 'PERSON'
 				if is_speaker:
 					speaker = word
-				latest_ne = [(word,tag)] + latest_ne
+				latest_ne = [[word,tag] + test_doc[i][j][2:]] + latest_ne
 				if not unreferenced_pronoun[tag]: # there is some unreferenced NE
 					reference_ne(latest_ne[0],unreferenced_pronoun['SPEAKER' if is_speaker else tag],test_doc)
 
@@ -146,7 +209,7 @@ def split_ne(sentence):
 	for word in sentence:
 		_split = word[0].split('_')
 		for _split_word in _split:
-			_list.append((_split_word,word[1]))
+			_list.append([_split_word] + word[1:])
 	return _list
 
 ######### PURGE ##################################
